@@ -26,6 +26,10 @@ class MainHandler(BaseHandler):
     def get(self):
         self.render('index.html')
 
+class BookHandler(BaseHandler):
+    def get(self, name):
+        self.render('book.jinja2')
+
 
 class NotFoundHandler(BaseHandler):
     def get(self):
@@ -40,6 +44,7 @@ class SlashMurdererApp(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
                                   ('/', MainHandler),
+                                  ('/book/(.*)', BookHandler),
                                   ('(.*)/$', SlashMurdererApp),
                               ] + [
                                   ('/.*', NotFoundHandler),
