@@ -1,4 +1,2 @@
-lee101
-======
-
-lee101.github.io
+# readingtime
+reading app for kids
