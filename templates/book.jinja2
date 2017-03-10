@@ -36,8 +36,17 @@
                         <img class="left" src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
                         <p class="page-words right">{{ page['text'] }}</p>
                     {% else %}
-                        <p class="page-words">{{ page['text'] }}</p>
-                        <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}">
+                        <p class="page-words">
+                            {% for word in page['words'] %}
+                                {% if word[0] in ' \n\t- ,.;:\'!?"' -%}
+                                    {{ word }}
+                                {%- else -%}
+                                    <span class="reading-word" tabindex="0">
+                                        {{ word }}</span>
+                                {%- endif %}
+                        {% endfor %}
+                        </p>
+                        <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
                     {% endif %}
                 <div class="clear clearfix"></div>
                 </section>
