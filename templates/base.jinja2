@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+
+    {% block headers %}
+    {% endblock %}
+
+
+
+    <link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/bower_components/reveal.js/css/reveal.css">
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css">
+
+    {% block css %}
+    {% endblock %}
+
+
+    <script src="/static/bower_components/jquery/dist/jquery.js"></script>
+    <script src="/static/bower_components/reveal.js/js/reveal.js"></script>
+
+    <script src="/static/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+
+    <script src="/static/js/readingtime.js"></script>
+    {% block js %}
+    {% endblock %}
+</head>
+<body>
+<div class="rt-body">
+    <div class="headerbody">
+        {% include "/templates/header.jinja2" %}
+    </div>
+
+    <div class="mainbody">
+        {% block mainbody %}
+
+        {% endblock %}
+    </div>
+
+    <div id="footerbody">
+        {% include "/templates/footer.jinja2" with context %}
+    </div>
+
+</div>
+</body>
+</html>

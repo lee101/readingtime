@@ -18,7 +18,7 @@ class BaseHandler(webapp2.RequestHandler):
         }
         template_values.update(extraParams)
 
-        template = JINJA_ENVIRONMENT.get_template(view_name)
+        template = JINJA_ENVIRONMENT.get_template('templates/' + view_name)
         self.response.write(template.render(template_values))
 
 books = {
@@ -112,7 +112,7 @@ books = {
 
 class MainHandler(BaseHandler):
     def get(self):
-        self.render('index.html')
+        self.render('index.jinja2')
 
 class BookHandler(BaseHandler):
     def get(self, name):
@@ -122,7 +122,7 @@ class BookHandler(BaseHandler):
 class NotFoundHandler(BaseHandler):
     def get(self):
         self.response.set_status(404)
-        self.render('index.html')
+        self.render('index.jinja2')
 
 
 class SlashMurdererApp(webapp2.RequestHandler):

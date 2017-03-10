@@ -1,0 +1,26 @@
+{
+  "name": "readingtime",
+  "homepage": "https://github.com/lee101/readingtime",
+  "authors": [
+    "Lee Penkman <leepenkman@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "keywords": [
+    "reading"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.1.1",
+    "reveal.js": "^3.4.1"
+  }
+}

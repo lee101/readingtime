@@ -1,0 +1,40 @@
+{% extends 'templates/base.jinja2' %}
+
+{% block headers %}
+
+    {% set title = 'Reading Time App! Help Kids Learn To Read!' -%}
+    {% set description = 'Reading Time helps kids focus on the words being said whilst you are reading to them making learning to read easier!' -%}
+
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <meta name="description"
+          content="{{ description }}">
+
+    <meta name="keywords" content="learning to read, story time, free kids books, reading game, teaching kids to read">
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:url" content="http://readingtime.app.nz">
+    <meta property="og:image" content="http://readingtime.app.nz/static/imgLOGOOOOOOOOOOOOTOD TODO.png">
+    <meta property="og:description"
+          content="{{ description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Reading Time">
+    <meta property="fb:admins" content="337972272904903">
+
+{% endblock %}
+
+{% block mainbody %}
+
+    <div class="reveal">
+
+        <div class="slides">
+
+
+            {% for page in book['pages'] %}
+                <section>
+                    <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}">
+                    {{ page['text'] }}
+                </section>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

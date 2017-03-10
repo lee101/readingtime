@@ -300,8 +300,9 @@ body {
   background-color: white;
   position: relative;
 }
-#mainbody {
-  position: relative;
+.mainbody {
+  width: 100%;
+  height: 700px;
 }
 .mm-background {
   text-align: center;
