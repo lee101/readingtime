@@ -26,6 +26,15 @@
 </head>
 <body>
 
+<div class="slides">
+
+{% for page in book['pages'] %}
+    <section>
+        <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}">
+        {{ page['text'] }}
+    </section>
+{% endfor %}
+</div>
 
 </body>
 </html>
