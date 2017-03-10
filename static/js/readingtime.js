@@ -3,6 +3,8 @@ var readingtime = new (function ($) {
     var self = {};
     $(document).ready(function () {
         Reveal.initialize({
+            width: '100%',
+            height: '100%',
 
             // Display controls in the bottom right corner
             controls: true,
@@ -11,7 +13,7 @@ var readingtime = new (function ($) {
             progress: true,
 
             // Display the page number of the current slide
-            slideNumber: false,
+            slideNumber: true,
 
             // Push each slide change to the browser history
             history: false,

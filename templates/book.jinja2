@@ -31,8 +31,15 @@
 
             {% for page in book['pages'] %}
                 <section>
-                    <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}">
-                    {{ page['text'] }}
+                    {% if 'layout' in page and page['layout'] == 'column' %}
+
+                        <img class="left" src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
+                        <p class="page-words right">{{ page['text'] }}</p>
+                    {% else %}
+                        <p class="page-words">{{ page['text'] }}</p>
+                        <img src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}">
+                    {% endif %}
+                <div class="clear clearfix"></div>
                 </section>
             {% endfor %}
         </div>

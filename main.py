@@ -91,20 +91,28 @@ books = {
             },
             {
                 'imagePath': 'corals17.png',
-                'text': 'Corals are both plants and animals. Thousands of little algae live inside corals, and give them energy to grow. They have hard outer skeletons and grow into many different shapes. Plankton is the main source of food for many seacreatures. They are a mix of algae, bacteria, tiny animals, and the eggs and larvae of larger animals that float about with the ocean currents. Feat her stars may look like plants, but they\'re really animals. They use their feather-like \'arms\' to catch and eat bits of floating plankton.'
+                'text': 'Corals are both plants and animals. Thousands of little algae live inside corals, and give them energy to grow. They have hard outer skeletons and grow into many different shapes. Plankton is the main source of food for many seacreatures. They are a mix of algae, bacteria, tiny animals, and the eggs and larvae of larger animals that float about with the ocean currents. Feat her stars may look like plants, but they\'re really animals. They use their feather-like \'arms\' to catch and eat bits of floating plankton.',
+                'layout': 'column',
             },
             {
                 'imagePath': 'fish18.png',
-                'text': 'Parrot fish have strong teeth that form a parrot-like beak, which they use to scrape algae off hard coral. Some species don\'t mind eating bits of coral as well, and they later poop out a fine sand that washes up on land to form beautiful white beaches. Clownfish and sea anemones live together and help each other. The clownfish help the anemones by cleaning their tentacles and luring other fish for the anemone to eat. The anemones, in turn, allow the clownfish to hide among their poisonous tentacles without stinging them. Cleaner wrasses are small fish that keep bigger fish clean by feeding on their parasites and dead skin. The bigger fish recognise the wrasses by their colours and the dance-like way they move.'
+                'text': 'Parrot fish have strong teeth that form a parrot-like beak, which they use to scrape algae off hard coral. '
+                        'Some species don\'t mind eating bits of coral as well, and they later poop out a fine sand that washes up on land to form beautiful white beaches. Clownfish and sea anemones live together and help each other. '
+                        'The clownfish help the anemones by cleaning their tentacles and luring other fish for the anemone to eat. The anemones, in turn, allow the clownfish to hide among their poisonous tentacles without stinging them. Cleaner wrasses are small fish that keep bigger fish clean by feeding on their parasites and dead skin. '
+                        'The bigger fish recognise the wrasses by their colours and the dance-like way they move.',
+                'layout': 'column',
             },
             {
                 'imagePath': 'reef19.png',
                 'text': 'The reef octopus can hide by changing its colour and texture. ' +
-                      'It makes its home in holes in the reef, or buries itself in the sand. Ghost pipefish can be found in pairs, floating with their heads down and hidden among sea grass, corals or feather stars. Like the reef octopus, they can change colour to blend in perfectly. The white tip reef shark has a thin body, broad head, and white tips on its dorsal and tail fin. They hunt at night, and sleep through most of the day.'
+                      'It makes its home in holes in the reef, or buries itself in the sand. Ghost pipefish can be found in pairs, floating with their heads down and hidden among sea grass, corals or feather stars. Like the reef octopus, they can change colour to blend in perfectly. The white tip reef shark has a thin body, broad head, and white tips on its dorsal and tail fin. They hunt at night, and sleep through most of the day.',
+                'layout': 'column',
+
             },
             {
                 'imagePath': 'turtle-manta-ray20.png',
-                'text': 'The hawksbill turtle has a flat body, a shell with jagged edges, and a sharp, curving mouth that looks like a hawk\'s beak. Mant a rays are huge fish with wing-like fins on thesides of their bodies. These large fins help them swim gracefully through the water. On some manta rays, the distance from one wing tip to the other can reach up to 23 feet! The dugong is a vegetarian marine mammal. Its favourite food is sea grass, which it is able to graze on with its specially-shaped snout. Dugongs are also called sea cows.'
+                'text': 'The hawksbill turtle has a flat body, a shell with jagged edges, and a sharp, curving mouth that looks like a hawk\'s beak. Mant a rays are huge fish with wing-like fins on thesides of their bodies. These large fins help them swim gracefully through the water. On some manta rays, the distance from one wing tip to the other can reach up to 23 feet! The dugong is a vegetarian marine mammal. Its favourite food is sea grass, which it is able to graze on with its specially-shaped snout. Dugongs are also called sea cows.',
+                'layout': 'column',
             }
         ]
     }
