@@ -316,6 +316,7 @@ body {
 }
 .reveal section img {
   margin: 0;
+  max-height: 100%;
 }
 .reveal p {
   margin: 0;
@@ -343,6 +344,7 @@ body {
 }
 .present {
   padding: 0 !important;
+  height: inherit;
 }
 .left {
   left: -8.33%;
