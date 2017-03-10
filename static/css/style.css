@@ -297,7 +297,7 @@ h2 {
 body {
   background-repeat: repeat;
   background-position: center 12px;
-  background-color: white;
+  background-color: black;
   position: relative;
   height: 100%;
 }
@@ -309,7 +309,7 @@ body {
   height: 100%;
 }
 .reveal {
-  color: #333;
+  color: #e0e0e0;
 }
 .reveal .controls .navigate-left {
   left: 0;
@@ -321,6 +321,7 @@ body {
 .reveal p {
   margin: 0;
   font-size: 22px;
+  cursor: pointer;
 }
 @media (min-width: 800px) {
   .reveal p {
@@ -341,6 +342,10 @@ body {
   .reveal p {
     font-size: 35px;
   }
+}
+.reveal p :focus {
+  color: #e3b122;
+  border-bottom: groove 2px #e3b122;
 }
 .present {
   padding: 0 !important;
