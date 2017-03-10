@@ -317,6 +317,30 @@ body {
 .reveal section img {
   margin: 0;
 }
+.reveal p {
+  margin: 0;
+  font-size: 22px;
+}
+@media (min-width: 800px) {
+  .reveal p {
+    font-size: 24px;
+  }
+}
+@media (min-width: 950px) {
+  .reveal p {
+    font-size: 28px;
+  }
+}
+@media (min-width: 1050px) {
+  .reveal p {
+    font-size: 32px;
+  }
+}
+@media (min-width: 1250px) {
+  .reveal p {
+    font-size: 35px;
+  }
+}
 .present {
   padding: 0 !important;
 }
