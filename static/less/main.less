@@ -33,25 +33,33 @@ body {
     margin: 0;
     max-height: 100%;
 }
+.reveal .slides {
+    margin: 0;
+    width: 99% !important;
+    height: 100% !important;
+}
 
 .reveal p {
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
     cursor: pointer;
     @media(min-width: 800px) {
-        font-size: 24px;
+        font-size: 22px;
     }
     @media(min-width: 950px) {
-        font-size: 28px;
+        font-size: 24px;
     }
     @media(min-width: 1050px) {
-        font-size: 32px;
+        font-size: 26px;
     }
     @media(min-width: 1250px) {
-        font-size: 35px;
+        font-size: 28px;
+    }
+    @media(min-width: 1450px) {
+        font-size: 30px;
     }
 
-    :focus {
+    :focus, :hover {
         color: #e3b122;
         border-bottom: groove 2px #e3b122;
     }
