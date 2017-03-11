@@ -23,6 +23,23 @@
 {% endblock %}
 
 {% block mainbody %}
+    <h1 class="main-header"><img src="/static/img/reading-time-icon32.png">
+        {% for word in ['Reading', ' ', 'Time', ' ', 'App'] -%}
+            {% if word[0] and word[0] in ' \n\t- ,.;:\'!?"' -%}
+                {{ word }}
+            {%- else -%}
+                <span class="reading-word" tabindex="0">{{ word }}</span>
+            {%- endif -%}
+        {%- endfor %}!</h1>
+    <p class="main-description">
+        {% for word in ['Help', ' ', 'kids', ' ', 'read', ' ', 'by', ' ', 'clicking', ' ', 'tab', ' ', 'or', ' ', 'hover', ' ', 'over', ' ', 'to', ' ', 'highlight', ' ', 'words', ' ', 'as', ' ', 'you', ' ', 'read', '. '] -%}
+            {% if word[0] and word[0] in ' \n\t- ,.;:\'!?"' -%}
+                {{ word }}
+            {%- else -%}
+                <span class="reading-word" tabindex="0">{{ word }}</span>
+            {%- endif -%}
+        {%- endfor %}
+        </p>
     {% for book in books.values() %}
         <div class="rt-book">
             <a class="rt-book-link" href="/static/{{ book['name'] }}">
