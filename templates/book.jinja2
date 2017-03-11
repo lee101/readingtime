@@ -37,9 +37,8 @@
                             {% if word[0] and word[0] in ' \n\t- ,.;:\'!?"' -%}
                                 {{ word }}
                             {%- else -%}
-                                <span class="reading-word" tabindex="0">
-                                    {{ word }}</span>
-                            {%- endif %}
+                                <span class="reading-word" tabindex="0">{{ word }}</span>
+                            {%- endif -%}
                         {%- endfor %}
                     </p>
                     <img class="{{ 'left' if columnlayout else '' }}" src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
