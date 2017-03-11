@@ -10,6 +10,7 @@ body {
     background-color: black;
     position: relative;
     height: 100%;
+    font-family: "Atlas Grotesk Web", sans-serif;
 }
 
 .rt-body {
@@ -20,15 +21,16 @@ body {
     width: 100%;
     height: 100%;
 }
+
 @font-color: #e0e0e0;
 
 .reveal {
     color: @font-color;
 }
+
 .main-header, .main-description {
     color: @font-color;
 }
-
 
 .reveal .controls .navigate-left {
     left: 0;
@@ -38,6 +40,7 @@ body {
     margin: 0;
     max-height: 100%;
 }
+
 .reveal .slides {
     margin: 0;
     width: 99% !important;
@@ -48,19 +51,19 @@ body {
     margin: 0;
     font-size: 20px;
     cursor: pointer;
-    @media(min-width: 800px) {
+    @media (min-width: 800px) {
         font-size: 22px;
     }
-    @media(min-width: 950px) {
+    @media (min-width: 950px) {
         font-size: 24px;
     }
-    @media(min-width: 1050px) {
+    @media (min-width: 1050px) {
         font-size: 26px;
     }
-    @media(min-width: 1250px) {
+    @media (min-width: 1250px) {
         font-size: 28px;
     }
-    @media(min-width: 1450px) {
+    @media (min-width: 1450px) {
         font-size: 30px;
     }
 
@@ -70,11 +73,18 @@ body {
     }
 
 }
+
+.main-description, .main-header {
+    margin: 20px;
+}
+
+.main-header {
+    padding: 20px 0;
+}
 .present {
     padding: 0 !important;
     height: inherit;
 }
-
 
 .left {
     left: -8.33%;

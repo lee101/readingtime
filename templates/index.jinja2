@@ -42,7 +42,7 @@
         </p>
     {% for book in books.values() %}
         <div class="rt-book">
-            <a class="rt-book-link" href="/static/{{ book['name'] }}">
+            <a class="rt-book-link" href="/book/{{ book['name'] }}">
                 <img class="rt-bookcover" src="/static/kids-book-covers/{{ book['cover_image_url'] }}">
             </a>
         </div>
