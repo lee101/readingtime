@@ -2,6 +2,7 @@ import re
 
 books = {
     'dive': {
+        'cover_image_url': 'dive.jpg',
         'name': 'dive',
         'pages': [
             {

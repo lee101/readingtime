@@ -25,7 +25,7 @@ class BaseHandler(webapp2.RequestHandler):
 
 class MainHandler(BaseHandler):
     def get(self):
-        self.render('index.jinja2')
+        self.render('index.jinja2', {'books': books})
 
 class BookHandler(BaseHandler):
     def get(self, name):
