@@ -38,7 +38,7 @@ books = {
             },
             {
                 'imagePath': 'moray-eel9.png',
-                'text': 'We saw a honeycomb moray eel having its teeth cleaned by cleaner wrasses, and another pair even offeredto give us a scrub! '
+                'text': 'We saw a honeycomb moray eel having its teeth cleaned by cleaner wrasses, and another pair even offered to give us a scrub! '
             },
             {
                 'imagePath': 'hidden-octopus10.png',
@@ -50,7 +50,7 @@ books = {
             },
             {
                 'imagePath': 'reef-shark12.png',
-                'text': 'We came across a couple of whit et ip reef sharks resting near the bottom. They\'re pretty harmless, so we swam in for a closer look'
+                'text': 'We came across a couple of white tip reef sharks resting near the bottom. They\'re pretty harmless, so we swam in for a closer look'
             },
             {
                 'imagePath': 'turtle13.png',
