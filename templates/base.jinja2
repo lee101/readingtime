@@ -28,20 +28,11 @@
 </head>
 <body>
 <div class="rt-body">
-    <div class="headerbody">
-        {% include "/templates/header.jinja2" %}
-    </div>
-
     <div class="mainbody">
         {% block mainbody %}
 
         {% endblock %}
     </div>
-
-    <div id="footerbody">
-        {% include "/templates/footer.jinja2" with context %}
-    </div>
-
 </div>
 </body>
 </html>
