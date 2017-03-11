@@ -28,7 +28,7 @@
 
         <div class="slides">
 
-
+            {% set page_idx = 0 %}
             {% for page in book['pages'] %}
                 <section>
                 {% set columnlayout = 'layout' in page and page['layout'] == 'column' %}
@@ -37,13 +37,14 @@
                             {% if word[0] and word[0] in ' \n\t- ,.;:\'!?"' -%}
                                 {{ word }}
                             {%- else -%}
-                                <span class="reading-word" tabindex="0">{{ word }}</span>
+                                <span class="reading-word" tabindex="0" onfocus="Reveal.slide({{ page_idx }})">{{ word }}</span>
                             {%- endif -%}
                         {%- endfor %}
                     </p>
                     <img class="{{ 'left' if columnlayout else '' }}" src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
                 <div class="clear clearfix"></div>
                 </section>
+                {% set page_idx = page_idx + 1 %}
             {% endfor %}
         </div>
     </div>

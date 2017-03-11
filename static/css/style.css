@@ -379,6 +379,11 @@ body {
   color: #e3b122;
   border-bottom: groove 2px #e3b122;
 }
+.rt-book :focus,
+.rt-book :hover {
+  color: #e3b122;
+  border: groove 2px #e3b122;
+}
 .main-description,
 .main-header {
   margin: 20px;
