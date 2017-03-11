@@ -98,6 +98,11 @@ var readingtime = new (function ($) {
             parallaxBackgroundVertical: null
 
         });
+        Reveal.addEventListener('slidechanged', function (event) {
+            // event.previousSlide, event.currentSlide, event.indexh, event.indexv
+            var index = event.indexh;
+            $('.slides').children().eq(index).find('.reading-word').first().focus();
+        });
     });
 
     return self;
