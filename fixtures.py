@@ -111,6 +111,48 @@ books = {
                 'layout': 'column',
             }
         ]
+    },
+    'alphabet': {
+        'cover_image_url': 'abc.jpg',
+        'name': 'alphabet',
+        'pages': [
+            {
+                'text': 'A  B  C    D  E  F  G    H  I  J  K  L  M    N  O  P  Q    R  S  T  U    V  W  X  Y  Z'
+            },
+            {
+                'text': 'a  b  c    d  e  f  g    h  i  j  k  l  m    n  o  p  q    r  s  t  u    v  w  x  y  z'
+            },
+            {
+                'text': 'Sounds Chart: \n'
+                        'A  E  I  O  U'
+                        'aa ae ai ao au'
+                        'ba be bi bo bu'
+                        'ca ce ci co cu'
+                        'da de di do du'
+                        'ea ee ei eo eu'
+                        'fa fe fi fo fu'
+                        'ga ge gi go gu'
+                        'ha he hi ho hu'
+                        'ia ie ii io iu'
+                        'ja je ji jo ju'
+                        'ka ke ki ko ku'
+                        'la le li lo lu'
+                        'ma me mi mo mu'
+                        'na ne ni no nu'
+                        'oa oe oi oo ou'
+                        'pa pe pi po pu'
+                        'qa qe qi qo qu'
+                        'ra re ri ro ru'
+                        'sa se si so su'
+                        'ta te ti to tu'
+                        'ua ue ui uo uu'
+                        'va ve vi vo vu'
+                        'wa we wi wo wu'
+                        'xa xe xi xo xu'
+                        'ya ye yi yo yu'
+                        'za ze zi zo zu'
+            },
+        ]
     }
 }
 

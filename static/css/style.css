@@ -321,6 +321,7 @@ body {
 }
 .reveal section img {
   margin: 0;
+  border: 0;
   max-height: 100%;
 }
 .reveal .slides {
@@ -379,10 +380,8 @@ body {
   color: #e3b122;
   border-bottom: groove 2px #e3b122;
 }
-.rt-book :focus,
-.rt-book :hover {
-  color: #e3b122;
-  border: groove 2px #e3b122;
+.page-words {
+  white-space: pre-wrap;
 }
 .main-description,
 .main-header {
