@@ -308,6 +308,7 @@ body {
 .mainbody {
   width: 100%;
   height: 100%;
+  overflow: scroll;
 }
 .reveal {
   color: #e0e0e0;
