@@ -153,10 +153,24 @@ books = {
                         'za ze zi zo zu\n'
             },
         ]
-    }
+    },
+    'at-the-zoo': {
+        'cover_image_url': 'at-the-zoo.jpg',
+        'name': 'at-the-zoo',
+        'pages': [
+            {'text': 'I like to look at the zebras.'},
+            {'text': 'I like to look at the bear.'},
+            {'text': 'I like to look at the tiger.'},
+            {'text': 'I like to look at the monkeys.'},
+            {'text': 'I like to look at the crocodile.'},
+            {'text': 'I like to look at the hippo.'},
+            {'text': 'I like to look at the lion.'},
+            {'text': 'I like to look at the elephants.'},
+        ]
+    },
 }
 
 for key, value in books.iteritems():
     book = books[key]
-    for page in book['pages']:
-        page['words'] = re.split(r'([- ,.;:\'!?"]*\s+[- ,.;:\'!?"]*)', page['text'])
+for page in book['pages']:
+    page['words'] = re.split(r'([- ,.;:\'!?"]*\s+[- ,.;:\'!?"]*)', page['text'])
