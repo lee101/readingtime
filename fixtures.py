@@ -196,5 +196,5 @@ books = {
 
 for key, value in books.iteritems():
     book = books[key]
-for page in book['pages']:
-    page['words'] = re.split(r'([- ,.;:\'!?"]*\s+[- ,.;:\'!?"]*)', page['text'])
+    for page in book['pages']:
+        page['words'] = re.split(r'([- ,.;:\'!?"]*\s+[- ,.;:\'!?"]*)', page['text'])
