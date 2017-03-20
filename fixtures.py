@@ -155,17 +155,41 @@ books = {
         ]
     },
     'at-the-zoo': {
-        'cover_image_url': 'at-the-zoo.jpg',
+        'cover_image_url': 'at-the-zoo-cover-small.jpg',
         'name': 'at-the-zoo',
         'pages': [
-            {'text': 'I like to look at the zebras.'},
-            {'text': 'I like to look at the bear.'},
-            {'text': 'I like to look at the tiger.'},
-            {'text': 'I like to look at the monkeys.'},
-            {'text': 'I like to look at the crocodile.'},
-            {'text': 'I like to look at the hippo.'},
-            {'text': 'I like to look at the lion.'},
-            {'text': 'I like to look at the elephants.'},
+            {
+                'text': 'I like to look at the zebras.',
+                'imagePath': 'zebra1.jpg',
+            },
+            {
+                'text': 'I like to look at the bear.',
+                'imagePath': 'bear2.jpg',
+            },
+            {
+                'text': 'I like to look at the tiger.',
+                'imagePath': 'tiger3.jpg',
+            },
+            {
+                'text': 'I like to look at the monkeys.',
+                'imagePath': 'monkey4.jpg',
+            },
+            {
+                'text': 'I like to look at the crocodile.',
+                'imagePath': 'crocodile5.jpg',
+            },
+            {
+                'text': 'I like to look at the hippo.',
+                'imagePath': 'hippo6.jpg',
+            },
+            {
+                'text': 'I like to look at the lion.',
+                'imagePath': 'lion7.jpg',
+            },
+            {
+                'text': 'I like to look at the elephants.',
+                'imagePath': 'elephant8.jpg',
+            },
         ]
     },
 }
