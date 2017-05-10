@@ -384,6 +384,14 @@ body {
 .page-words {
   white-space: pre-wrap;
 }
+.reveal p.dark-words {
+  color: #222;
+}
+.reveal p.dark-words :focus,
+.reveal p.dark-words :hover {
+  color: #806317;
+  border-bottom: groove 2px #806317;
+}
 .main-description,
 .main-header {
   margin: 20px;

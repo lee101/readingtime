@@ -216,6 +216,10 @@ books = {
                realized it must be inhabited by many of the
                animals that woke up only at night!""",
                 'imagePath': 'wildlife-in-a-city-pond-2.png',
+                'dark_color': True,
+                'css': """top: 62px;
+    position: absolute;
+    left: 265px;"""
             },
 
             {
