@@ -5,6 +5,7 @@ books = {
     'dive': {
         'cover_image_url': 'dive.jpg',
         'name': 'dive',
+        'audio_link': '/static/bookdata/alphabet/alphabet.mp3',
         'pages': [
             {
                 'imagePath': 'tropical-fish1.png',
@@ -158,6 +159,8 @@ books = {
     'at-the-zoo': {
         'cover_image_url': 'at-the-zoo-cover-small.jpg',
         'name': 'at-the-zoo',
+        'audio_link': '/static/bookdata/at-the-zoo/at-the-zoo.mp3',
+        'subs_link': '/static/bookdata/at-the-zoo/at-the-zoo.json',
         'pages': [
             {
                 'text': 'I like to look at the zebras.',

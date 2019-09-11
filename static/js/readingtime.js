@@ -1,6 +1,7 @@
 var readingtime = new (function ($) {
     "use strict";
     var self = {};
+    self.subs = {};
     $(document).ready(function () {
         Reveal.initialize({
             width: '100%',
@@ -103,7 +104,86 @@ var readingtime = new (function ($) {
             var index = event.indexh;
             $('.slides').children().eq(index).find('.reading-word').first().focus();
         });
+        $.getJSON(subs_link, function (subs) {
+            self.subs = subs
+        })
     });
+    self.audio = $('#audio_link'); // todo
+
+
+    self.playAudioAt = function (wordIdx) {
+        let wordSub = self.subs.words[wordIdx];
+        var aboutToSayWord = playing && audio.currentTime() < wordSub['start'] && audio.currentTime() > wordSub['start'] - 2;
+        if (!aboutToSayWord) {
+            audio.play(Math.min(wordSub['start'] - .5, 0))
+        }
+    };
+
+    self.wordFocus = function (pageIdx, wordIdx) {
+        Reveal.slide(pageIdx);
+        // if it was a user interaction set audio playtime to before this wordIdx
+        self.playAudioAt(wordIdx)
+        $('.reading-word').removeClass('.active')
+    };
 
     return self;
 })(jQuery);
+
+var audio = new (function () {
+    "use strict";
+    var self = {};
+    self.previousTime = 0;
+    self.audio = document.getElementById('audio_link'); // todo
+    self.pageEndTime = 9999999;
+
+    function getSubAfter(time) {
+        for (var i = 0; i < readingtime.subs.length; i++) {
+            var sub = readingtime.subs[i];
+            if (sub.start > time) {
+                return [sub, i]
+            }
+        }
+        return [sub, i]
+    }
+
+    self.playlistener = function () {
+        //setfocus on word at index in subs
+        var nextSubFound = getSubAfter(self.previousTime);
+        var nextSub = nextSubFound[0];
+        var nextSubIndex = nextSubFound[1];
+        //should it be highlighted
+        let currentTime = self.currentTime();
+        var shouldBeHighlighted = nextSub.time < currentTime;
+        if (shouldBeHighlighted) {
+            let $wordElement = $('#word-' + nextSubIndex);
+            let $previousWordElement = $('#word-' + (nextSubIndex - 1));
+            $wordElement.addClass('.active');
+            $previousWordElement.removeClass('.active');
+            //listen on page end and pause for interaction
+
+            let isLastWordInPage = $wordElement.next().length === 0;
+            if (isLastWordInPage) {
+                self.pageEndTime = nextSub.end;
+            }
+        }
+
+        if (currentTime > self.pageEndTime) {
+            self.audio.pause();
+            self.pageEndTime = 9999999;
+        }
+
+
+        self.previousTime = currentTime;
+    };
+
+    self.currentTime = function () {
+        return self.audio.currentTime;
+    };
+    self.play = function (time) {
+        self.audio.currentTime = time;
+        self.audio.play();
+    };
+    self.audio.addEventListener('timeupdate', self.playlistener);
+
+    return self;
+})();

@@ -10,15 +10,24 @@
     <meta name="description"
           content="{{ description }}">
 
-    <meta name="keywords" content="learning to read, story time, free kids books, reading game, teaching kids to read">
+    <meta name="keywords"
+          content="learning to read, story time, free kids books, reading game, teaching kids to read">
     <meta property="og:title" content="{{ title }}">
     <meta property="og:url" content="http://readingtime.app.nz">
-    <meta property="og:image" content="http://readingtime.app.nz/static/imgLOGOOOOOOOOOOOOTOD TODO.png">
+    <meta property="og:image"
+          content="http://readingtime.app.nz/static/imgLOGOOOOOOOOOOOOTOD TODO.png">
     <meta property="og:description"
           content="{{ description }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Reading Time">
     <meta property="fb:admins" content="337972272904903">
+
+    <script>
+        var subs_link;
+        {% if book['subs_link'] %}
+            subs_link = "{{ book['subs_link'] }}"
+        {% endif %}
+    </script>
 
 {% endblock %}
 
@@ -29,25 +38,36 @@
         <div class="slides">
 
             {% set page_idx = 0 %}
+            {% set word_idx = 0 %}
+            {% if book['audio_link'] %}
+
+                <audio id="audioLink" preload="auto" autoplay>
+                    <source src="{{ book['audio_link'] }}" type="audio/mpeg">
+                </audio>
+            {% endif %}
             {% for page in book['pages'] %}
                 <section>
-                {% set columnlayout = 'layout' in page and page['layout'] == 'column' %}
-                {% set dark_color = page.get('dark_color') %}
-                    <p class="page-words{{ ' right' if columnlayout else '' }}{{ ' dark-words' if dark_color else '' }}"
+                    {% set columnlayout = 'layout' in page and page['layout'] == 'column' %}
+                    {% set dark_color = page.get('dark_color') %}
+                    <p class="page-words {{ ' right' if columnlayout else '' }}{{ ' dark-words' if dark_color else '' }}"
                        style="{{ page.get('css') if page.get('css') else '' }}">
                         {%- for word in page['words'] -%}
 
                             {%- if word[0] and word[0] in ' \n\t- ,.;:\'!?"<' -%}
                                 {{ word }}
                             {%- else -%}
-                                <span class="reading-word" tabindex="0" onfocus="Reveal.slide({{ page_idx }})">{{ word }}</span>
+                                <span id="word-{{ word_idx }}" class="reading-word" tabindex="0"
+                                      onfocus="readingtime.wordFocus({{ page_idx }}, {{ word_idx }})">{{ word }}</span>
                             {%- endif -%}
+                            {% set word_idx = word_idx + 1 %}
                         {%- endfor -%}
                     </p>
                     {% if 'imagePath' in page %}
-                        <img class="{{ 'left' if columnlayout else '' }}" src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}" alt="{{ book['name'] }}">
+                        <img class="{{ 'left' if columnlayout else '' }}"
+                             src="/static/bookdata/{{ book['name'] }}/{{ page['imagePath'] }}"
+                             alt="{{ book['name'] }}">
                     {% endif %}
-                <div class="clear clearfix"></div>
+                    <div class="clear clearfix"></div>
                 </section>
                 {% set page_idx = page_idx + 1 %}
             {% endfor %}
