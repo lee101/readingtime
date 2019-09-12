@@ -38,7 +38,8 @@
         <div class="slides">
 
             {% set page_idx = 0 %}
-            {% set word_idx = 0 %}
+{#        hack around scoping variables :( #}
+            {% set word_counter = [] %}
             {% if book['audio_link'] %}
 
                 <audio id="audioLink" preload="auto" autoplay>
@@ -56,10 +57,10 @@
                             {%- if word[0] and word[0] in ' \n\t- ,.;:\'!?"<' -%}
                                 {{ word }}
                             {%- else -%}
-                                <span id="word-{{ word_idx }}" class="reading-word" tabindex="0"
-                                      onfocus="readingtime.wordFocus({{ page_idx }}, {{ word_idx }})">{{ word }}</span>
+                                <span id="word-{{ word_counter|length }}" class="reading-word" tabindex="0"
+                                      onfocus="readingtime.wordFocus({{ page_idx }}, {{ word_counter|length }})">{{ word }}</span>
+                                {%- if word_counter.append('1') %}{% endif -%}
                             {%- endif -%}
-                            {% set word_idx = word_idx + 1 %}
                         {%- endfor -%}
                     </p>
                     {% if 'imagePath' in page %}

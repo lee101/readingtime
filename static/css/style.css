@@ -334,42 +334,42 @@ body {
 .main-header,
 .main-description {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
 }
 @media (min-width: 800px) {
   .reveal p,
   .main-header,
   .main-description {
-    font-size: 22px;
+    font-size: 26px;
   }
 }
 @media (min-width: 950px) {
   .reveal p,
   .main-header,
   .main-description {
-    font-size: 24px;
+    font-size: 30px;
   }
 }
 @media (min-width: 1050px) {
   .reveal p,
   .main-header,
   .main-description {
-    font-size: 26px;
+    font-size: 32px;
   }
 }
 @media (min-width: 1250px) {
   .reveal p,
   .main-header,
   .main-description {
-    font-size: 28px;
+    font-size: 34px;
   }
 }
 @media (min-width: 1450px) {
   .reveal p,
   .main-header,
   .main-description {
-    font-size: 30px;
+    font-size: 36px;
   }
 }
 .reveal p :focus,
@@ -377,7 +377,10 @@ body {
 .main-description :focus,
 .reveal p :hover,
 .main-header :hover,
-.main-description :hover {
+.main-description :hover,
+.reveal p .active,
+.main-header .active,
+.main-description .active {
   color: #e3b122;
   border-bottom: groove 2px #e3b122;
 }
@@ -388,7 +391,8 @@ body {
   color: #222;
 }
 .reveal p.dark-words :focus,
-.reveal p.dark-words :hover {
+.reveal p.dark-words :hover,
+.reveal p.dark-words .active {
   color: #a57909;
   border-bottom: groove 2px #a57909;
 }

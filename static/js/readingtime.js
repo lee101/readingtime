@@ -108,14 +108,14 @@ var readingtime = new (function ($) {
             self.subs = subs
         })
     });
-    self.audio = $('#audio_link'); // todo
 
 
     self.playAudioAt = function (wordIdx) {
         let wordSub = self.subs.words[wordIdx];
-        var aboutToSayWord = playing && audio.currentTime() < wordSub['start'] && audio.currentTime() > wordSub['start'] - 2;
+        let currentTime = bookAudio.currentTime();
+        var aboutToSayWord = !bookAudio.isPlaying() && currentTime < wordSub['start'] && currentTime > wordSub['start'] - 2;
         if (!aboutToSayWord) {
-            audio.play(Math.min(wordSub['start'] - .5, 0))
+            bookAudio.play(Math.max(wordSub['start'] , 0))
         }
     };
 
@@ -123,22 +123,25 @@ var readingtime = new (function ($) {
         Reveal.slide(pageIdx);
         // if it was a user interaction set audio playtime to before this wordIdx
         self.playAudioAt(wordIdx)
-        $('.reading-word').removeClass('.active')
+        $('.reading-word').removeClass('active');
     };
 
     return self;
 })(jQuery);
 
-var audio = new (function () {
+var bookAudio = new (function () {
     "use strict";
     var self = {};
     self.previousTime = 0;
-    self.audio = document.getElementById('audio_link'); // todo
     self.pageEndTime = 9999999;
 
+    self.isPlaying = function () {
+        return !self.audio.paused
+    }
+
     function getSubAfter(time) {
-        for (var i = 0; i < readingtime.subs.length; i++) {
-            var sub = readingtime.subs[i];
+        for (var i = 0; i < readingtime.subs.words.length; i++) {
+            var sub = readingtime.subs.words[i];
             if (sub.start > time) {
                 return [sub, i]
             }
@@ -148,21 +151,22 @@ var audio = new (function () {
 
     self.playlistener = function () {
         //setfocus on word at index in subs
+        //edge case where time can overshoot: probably doesnt happen
         var nextSubFound = getSubAfter(self.previousTime);
         var nextSub = nextSubFound[0];
         var nextSubIndex = nextSubFound[1];
         //should it be highlighted
         let currentTime = self.currentTime();
-        var shouldBeHighlighted = nextSub.time < currentTime;
+        var shouldBeHighlighted = nextSub.start - .3 < currentTime;
         if (shouldBeHighlighted) {
             let $wordElement = $('#word-' + nextSubIndex);
-            let $previousWordElement = $('#word-' + (nextSubIndex - 1));
-            $wordElement.addClass('.active');
-            $previousWordElement.removeClass('.active');
+            $('.reading-word').removeClass('active');
+
+            $wordElement.addClass('active');
             //listen on page end and pause for interaction
 
             let isLastWordInPage = $wordElement.next().length === 0;
-            if (isLastWordInPage) {
+            if (!isLastWordInPage) {
                 self.pageEndTime = nextSub.end;
             }
         }
@@ -180,10 +184,15 @@ var audio = new (function () {
         return self.audio.currentTime;
     };
     self.play = function (time) {
-        self.audio.currentTime = time;
         self.audio.play();
+        self.audio.currentTime = time;
     };
-    self.audio.addEventListener('timeupdate', self.playlistener);
+
+    $(document).ready(function () {
+        self.audio = document.getElementById('audioLink'); // todo
+
+        self.audio.addEventListener('timeupdate', self.playlistener);
+    })
 
     return self;
 })();
