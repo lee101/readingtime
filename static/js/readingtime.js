@@ -115,7 +115,7 @@ var readingtime = new (function ($) {
         let currentTime = bookAudio.currentTime();
         var aboutToSayWord = !bookAudio.isPlaying() && currentTime < wordSub['start'] && currentTime > wordSub['start'] - 2;
         if (!aboutToSayWord) {
-            bookAudio.play(Math.max(wordSub['start'] , 0))
+            bookAudio.play(Math.max(wordSub['start'], 0))
         }
     };
 
@@ -124,6 +124,8 @@ var readingtime = new (function ($) {
         // if it was a user interaction set audio playtime to before this wordIdx
         self.playAudioAt(wordIdx)
         $('.reading-word').removeClass('active');
+        bookAudio.audio.pageEndTime = null;
+
     };
 
     return self;
@@ -157,7 +159,8 @@ var bookAudio = new (function () {
         var nextSubIndex = nextSubFound[1];
         //should it be highlighted
         let currentTime = self.currentTime();
-        var shouldBeHighlighted = nextSub.start - .3 < currentTime;
+        var shouldBeHighlighted = nextSub.start < currentTime; //minus to highlight quicker?
+        var pageEndTime;
         if (shouldBeHighlighted) {
             let $wordElement = $('#word-' + nextSubIndex);
             $('.reading-word').removeClass('active');
@@ -166,14 +169,18 @@ var bookAudio = new (function () {
             //listen on page end and pause for interaction
 
             let isLastWordInPage = $wordElement.next().length === 0;
-            if (!isLastWordInPage) {
-                self.pageEndTime = nextSub.end;
+
+            if (isLastWordInPage) {
+                if (self.isPlaying()) {
+                    //about to hit last word in page
+                    self.pageEndTime = nextSub.end;
+                }
             }
         }
 
-        if (currentTime > self.pageEndTime) {
+        if (self.pageEndTime && currentTime > self.pageEndTime) {
             self.audio.pause();
-            self.pageEndTime = 9999999;
+            self.pageEndTime = null;
         }
 
 
