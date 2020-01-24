@@ -35,7 +35,7 @@ class BookHandler(BaseHandler):
 class NotFoundHandler(BaseHandler):
     def get(self):
         self.response.set_status(404)
-        self.render('index.jinja2')
+        self.render('404.jinja2')
 
 
 class SlashMurdererApp(webapp2.RequestHandler):
@@ -46,6 +46,7 @@ class SlashMurdererApp(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
                                   ('/', MainHandler),
                                   ('/book/(.*)', BookHandler),
+                                  ('/_ah/warmup', BookHandler),
                                   ('(.*)/$', SlashMurdererApp),
                               ] + [
                                   ('/.*', NotFoundHandler),

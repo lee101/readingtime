@@ -102,10 +102,11 @@ var readingtime = new (function ($) {
         Reveal.addEventListener('slidechanged', function (event) {
             // event.previousSlide, event.currentSlide, event.indexh, event.indexv
             var index = event.indexh;
-            $('.slides').children().eq(index).find('.reading-word').first().focus();
+            $('.slides .present .reading-word').first().focus();
         });
         $.getJSON(subs_link, function (subs) {
             self.subs = subs
+            bookAudio.pageEndTime = bookAudio.getPageEndTime(0);
         })
     });
 
@@ -122,9 +123,10 @@ var readingtime = new (function ($) {
     self.wordFocus = function (pageIdx, wordIdx) {
         Reveal.slide(pageIdx);
         // if it was a user interaction set audio playtime to before this wordIdx
-        self.playAudioAt(wordIdx)
+        self.playAudioAt(wordIdx);
+        bookAudio.pageEndTime = bookAudio.getPageEndTime(wordIdx);
+
         $('.reading-word').removeClass('active');
-        bookAudio.audio.pageEndTime = null;
 
     };
 
@@ -139,7 +141,7 @@ var bookAudio = new (function () {
 
     self.isPlaying = function () {
         return !self.audio.paused
-    }
+    };
 
     function getSubAfter(time) {
         for (var i = 0; i < readingtime.subs.words.length; i++) {
@@ -151,6 +153,22 @@ var bookAudio = new (function () {
         return [sub, i]
     }
 
+    self.getPageEndTime = function (subIndex) {
+        var $endElement = $('#word-' + subIndex);
+        // first element reads the entrie text, others just read themselves
+        if ($endElement.prev().length !== 0) {
+            var sub = readingtime.subs.words[subIndex];
+            return sub.end
+        }
+        while ($endElement.next().length !== 0) {
+            $endElement = $endElement.next();
+            subIndex++;
+        }
+        var sub = readingtime.subs.words[subIndex];
+
+        return sub.end
+    };
+
     self.playlistener = function () {
         //setfocus on word at index in subs
         //edge case where time can overshoot: probably doesnt happen
@@ -159,23 +177,14 @@ var bookAudio = new (function () {
         var nextSubIndex = nextSubFound[1];
         //should it be highlighted
         let currentTime = self.currentTime();
-        var shouldBeHighlighted = nextSub.start < currentTime; //minus to highlight quicker?
-        var pageEndTime;
+        var shouldBeHighlighted = nextSub.start < currentTime; //minus some constant to highlight quicker?
+        let $wordElement = $('#word-' + nextSubIndex);
+
         if (shouldBeHighlighted) {
-            let $wordElement = $('#word-' + nextSubIndex);
             $('.reading-word').removeClass('active');
 
             $wordElement.addClass('active');
-            //listen on page end and pause for interaction
 
-            let isLastWordInPage = $wordElement.next().length === 0;
-
-            if (isLastWordInPage) {
-                if (self.isPlaying()) {
-                    //about to hit last word in page
-                    self.pageEndTime = nextSub.end;
-                }
-            }
         }
 
         if (self.pageEndTime && currentTime > self.pageEndTime) {
