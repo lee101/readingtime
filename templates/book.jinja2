@@ -47,6 +47,8 @@
                 </audio>
             {% endif %}
             {% for page in book['pages'] %}
+                {% set first_word_in_page = True %}
+
                 <section>
                     {% set columnlayout = 'layout' in page and page['layout'] == 'column' %}
                     {% set dark_color = page.get('dark_color') %}
@@ -58,7 +60,11 @@
                                 {{ word }}
                             {%- else -%}
                                 <span id="word-{{ word_counter|length }}" class="reading-word" tabindex="0"
-                                      onfocus="readingtime.wordFocus({{ page_idx }}, {{ word_counter|length }})">{{ word }}</span>
+                                      {% if first_word_in_page %}
+                                      onfocus="readingtime.wordFocus({{ page_idx }}, {{ word_counter|length }})"
+                                      {% set first_word_in_page = False %}
+                                      {% endif %}
+                                >{{ word }}</span>
                                 {%- if word_counter.append('1') %}{% endif -%}
                             {%- endif -%}
                         {%- endfor -%}

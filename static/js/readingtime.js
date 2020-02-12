@@ -123,10 +123,13 @@ var readingtime = new (function ($) {
     self.wordFocus = function (pageIdx, wordIdx) {
         Reveal.slide(pageIdx);
         // if it was a user interaction set audio playtime to before this wordIdx
-        self.playAudioAt(wordIdx);
-        bookAudio.pageEndTime = bookAudio.getPageEndTime(wordIdx);
+        let pageEndTime = bookAudio.getPageEndTime(wordIdx);
+        if (pageEndTime !== 0) {
+            bookAudio.pageEndTime = pageEndTime;
+            self.playAudioAt(wordIdx);
 
-        $('.reading-word').removeClass('active');
+            $('.reading-word').removeClass('active');
+        }
 
     };
 
@@ -155,10 +158,12 @@ var bookAudio = new (function () {
 
     self.getPageEndTime = function (subIndex) {
         var $endElement = $('#word-' + subIndex);
-        // first element reads the entrie text, others just read themselves
+        // first element reads the entire text, others just read themselves
         if ($endElement.prev().length !== 0) {
-            var sub = readingtime.subs.words[subIndex];
-            return sub.end
+            //actually dont read only read on the first focus
+            return 0
+            // var sub = readingtime.subs.words[subIndex];
+            // return sub.end
         }
         while ($endElement.next().length !== 0) {
             $endElement = $endElement.next();
