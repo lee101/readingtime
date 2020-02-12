@@ -5,7 +5,6 @@ books = {
     'dive': {
         'cover_image_url': 'dive.jpg',
         'name': 'dive',
-        'audio_link': '/static/bookdata/alphabet/alphabet.mp3',
         'pages': [
             {
                 'imagePath': 'tropical-fish1.png',
@@ -65,7 +64,7 @@ books = {
             },
             {
                 'imagePath': 'dugong15.png',
-                'text': 'And just when we thought this dive couldn\'t possibly get any better, we sighted a dugong grazing on somesea grass. '
+                'text': 'And just when we thought this dive couldn\'t possibly get any better, we sighted a dugong grazing on some sea grass. '
             },
             {
                 'imagePath': 'diving-ended16.png',
@@ -116,6 +115,7 @@ books = {
     },
     'alphabet': {
         'cover_image_url': 'abc.jpg',
+        'audio_link': '/static/bookdata/alphabet/alphabet.mp3',
         'name': 'alphabet',
         'pages': [
             {
@@ -159,8 +159,8 @@ books = {
     'at-the-zoo': {
         'cover_image_url': 'at-the-zoo-cover-small.jpg',
         'name': 'at-the-zoo',
-        # 'audio_link': 'https://storage.googleapis.com/reading-time-assets/at-the-zoo.mp3',
-        'audio_link': '/static/bookdata/at-the-zoo/at-the-zoo.mp3',
+        'audio_link': 'https://storage.googleapis.com/reading-time-assets/at-the-zoo.mp3',
+        # 'audio_link': '/static/bookdata/at-the-zoo/at-the-zoo.mp3',
         'subs_link': '/static/bookdata/at-the-zoo/at-the-zoo.json',
         'pages': [
             {
