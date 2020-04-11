@@ -146,14 +146,15 @@ var bookAudio = new (function () {
         return !self.audio.paused
     };
 
-    function getSubAfter(time) {
+    function getSubsAfterBefore(time, end) {
+        var subs = [];
         for (var i = 0; i < readingtime.subs.words.length; i++) {
             var sub = readingtime.subs.words[i];
-            if (sub.start > time) {
-                return [sub, i]
+            if (sub.start > time && sub.start < end) {
+                subs.push([sub, i]);
             }
         }
-        return [sub, i]
+        return subs || [[sub, i]]
     }
 
     self.getPageEndTime = function (subIndex) {
@@ -175,22 +176,24 @@ var bookAudio = new (function () {
     };
 
     self.playlistener = function () {
-        //setfocus on word at index in subs
-        //edge case where time can overshoot: probably doesnt happen
-        var nextSubFound = getSubAfter(self.previousTime);
-        var nextSub = nextSubFound[0];
-        var nextSubIndex = nextSubFound[1];
+
         //should it be highlighted
         let currentTime = self.currentTime();
-        var shouldBeHighlighted = nextSub.start < currentTime; //minus some constant to highlight quicker?
-        let $wordElement = $('#word-' + nextSubIndex);
 
-        if (shouldBeHighlighted) {
-            $('.reading-word').removeClass('active');
+        //setfocus on word at index in subs
+        //select a range to fix edge case where time can overshoot
+        var nextSubsFound = getSubsAfterBefore(self.previousTime, currentTime); //minus some constant to highlight quicker?
 
+        $('.reading-word').removeClass('active');
+
+        for (var i = 0; i < nextSubsFound.length; i++) {
+            // var nextSub = nextSubsFound[0];
+            var nextSubIndex = nextSubsFound[i][1];
+            let $wordElement = $('#word-' + nextSubIndex);
             $wordElement.addClass('active');
 
         }
+
 
         if (self.pageEndTime && currentTime > self.pageEndTime) {
             self.audio.pause();
