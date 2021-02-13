@@ -113,6 +113,37 @@ books = {
             }
         ]
     },
+    'cuddles-the-koala': {
+        'cover_image_url': 'cuddles-the-koala-small.png',
+        # 'audio_link': '/static/bookdata/cuddles-the-koala/alphabet.mp3',
+        'name': 'cuddles-the-koala',
+        'pages': [
+            {
+                'imagePath': '1.png',
+                'text': 'Once upon a time there was a koala named Cuddles. He lived in a small eucalyptus tree. '
+'Every once in a while the koala would go for a walk and take a look around his neighbourhood to see where all the other koalas were living '
+
+            },
+            {
+                'imagePath': '2.png',
+                'text': 'He started to notice that other koalas had even bigger trees, much prettier, taller, wider and they all look so happy living in their trees '
+'this made the koala question his tree and start to wonder if there was a better tree out there for him '
+'So the next day he went on a mission to find a tree just like all of the other koalas trees'
+            },
+            {
+                'imagePath': '3.png',
+                'text': 'he searched and searched and searched until finally he found the biggest tree in the whole forest, it had lots of eucalyptus leaves and the best view of all of the other trees. '
+'he was so excited to go live in his tree he went home and packed up all his belongings his lunch his favourite cuddly Toy and off he went to his brand new tree '
+'as he started to settle down living in is new tree he thought it was very cool at first it had great views he could smell the fresh air and he could look over all the other koalas in there trees but then he started to feel a bit lonely up in the big tree all by himself, he started to realise the reasons that he liked his old tree. Even though his old tree was very small and didn\'t have the best of view she still had lots of fun memories and that tree like having dinner parties with friends reading his favourite book till he fell asleep.'
+
+            },
+            {
+                'imagePath': '4.png',
+                'text': 'He realized he missed his old tree, being near his friends, he didn\'t need such a big tree after all, he found another tree near all his friends and family.'
+
+            },
+        ]
+    },
     'alphabet': {
         'cover_image_url': 'abc.jpg',
         'audio_link': '/static/bookdata/alphabet/alphabet.mp3',
