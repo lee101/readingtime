@@ -3,10 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.}}</title>
+<title>{{.Title}}</title>
+{{template "headmeta" .}}
 <link rel="icon" href="/static/img/favicon.ico">
 <link href="/static/css/app.css" rel="stylesheet">
 </head>{{end}}
+
+{{define "headmeta"}}<meta name="description" content="{{.Desc}}">
+{{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">
+<meta property="og:url" content="{{.Canonical}}">
+{{end}}<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Desc}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Reading Time">
+<meta property="og:image" content="{{if .Image}}{{.Image}}{{else}}https://readingtime.app.nz/static/img/reading-time-icon512.png{{end}}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{.Title}}">
+<meta name="twitter:description" content="{{.Desc}}">{{end}}
 
 {{define "header"}}
 <header class="site-header">
@@ -17,6 +30,8 @@
   </a>
   <nav class="site-nav">
     <a href="/">Library</a>
+    <a href="/stories">Stories</a>
+    <a href="/pricing">Pricing</a>
     <a href="/author" class="nav-create">✨ Create</a>
     {{if .User}}
       <a class="chip" href="{{.Cfg.AccountURL}}" title="app.nz credits">

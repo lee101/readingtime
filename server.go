@@ -85,6 +85,15 @@ func main() {
 		case path == "/author" && method == "GET":
 			srv.handleAuthor(ctx)
 
+		case path == "/stories" && method == "GET":
+			srv.handleStories(ctx)
+
+		case path == "/pricing" && method == "GET":
+			srv.handlePricing(ctx)
+
+		case path == "/sitemap.xml" && method == "GET":
+			srv.handleSitemap(ctx)
+
 		case path == "/login" && method == "GET":
 			srv.handleLogin(ctx)
 
@@ -120,7 +129,7 @@ func main() {
 
 		case path == "/robots.txt":
 			ctx.SetContentType("text/plain")
-			ctx.WriteString("User-agent: *\nAllow: /\n")
+			ctx.WriteString("User-agent: *\nAllow: /\nSitemap: " + cfg.SiteBaseURL + "/sitemap.xml\n")
 
 		case strings.HasPrefix(path, "/static/"):
 			staticFS(ctx)

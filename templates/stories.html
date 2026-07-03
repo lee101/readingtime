@@ -1,0 +1,29 @@
+{{template "head" .Meta}}
+<body class="page-home">
+{{template "header" .}}
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Story gallery</h1>
+    <p>Illustrated picture books created with AI by the Reading Time community.
+       Open any story and read along as each word lights up.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="/author">✨ Create your own</a>
+      <a class="btn btn-ghost btn-lg" href="/">Sample library</a>
+    </div>
+  </div>
+</section>
+
+<section class="shelf" id="gallery">
+  <h2>Community stories</h2>
+  {{if .PublicStories}}
+  <div class="grid">
+    {{range .PublicStories}}{{template "card" .}}{{end}}
+  </div>
+  {{else}}
+  <p>No public stories yet — <a href="/author">be the first to create one</a>.</p>
+  {{end}}
+</section>
+
+{{template "footer"}}
+</body></html>

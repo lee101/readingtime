@@ -122,6 +122,7 @@ type cardView struct {
 }
 
 type homeView struct {
+	Meta          Meta
 	User          *User
 	Cfg           Config
 	LoginURL      string
@@ -130,9 +131,18 @@ type homeView struct {
 	PublicStories []cardView
 }
 
+const siteDesc = "Reading Time is an AI storytelling & reading app for kids. Stories light up word-by-word as they're narrated, making learning to read easier — and you can generate whole illustrated picture books with AI."
+
+func (s *Server) meta(title, desc, path string) Meta {
+	return Meta{Title: title, Desc: desc, Canonical: s.cfg.SiteBaseURL + path}
+}
+
 func (s *Server) handleHome(ctx *fasthttp.RequestCtx) {
 	u := s.user(ctx)
-	v := homeView{User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/")}
+	v := homeView{
+		Meta: s.meta("Reading Time — AI storytelling & reading app for kids", siteDesc, "/"),
+		User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"),
+	}
 	for _, name := range s.bookOrder {
 		b := s.books[name]
 		v.Samples = append(v.Samples, cardView{
@@ -172,10 +182,63 @@ func storyCard(st *Story) cardView {
 func (s *Server) handleAuthor(ctx *fasthttp.RequestCtx) {
 	u := s.user(ctx)
 	s.render(ctx, "author.html", map[string]any{
+		"Meta":     s.meta("Create a story — Reading Time", "Describe an idea and generate a complete illustrated picture book with AI, then read it together with word-by-word highlighting. Free app.nz account includes free credits.", "/author"),
 		"User":     u,
 		"Cfg":      s.cfg,
 		"LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/author"),
 	})
+}
+
+func (s *Server) handleStories(ctx *fasthttp.RequestCtx) {
+	v := homeView{
+		Meta: s.meta("Story gallery — Reading Time", "Browse illustrated picture books created with AI by the Reading Time community — read any of them together with word-by-word highlighting.", "/stories"),
+		User: s.user(ctx), Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/stories"),
+	}
+	if pub, err := s.stories.listPublic(200); err == nil {
+		for _, st := range pub {
+			v.PublicStories = append(v.PublicStories, storyCard(st))
+		}
+	}
+	s.render(ctx, "stories.html", v)
+}
+
+func (s *Server) handlePricing(ctx *fasthttp.RequestCtx) {
+	s.render(ctx, "pricing.html", map[string]any{
+		"Meta":     s.meta("Pricing & credits — Reading Time", "Reading the library is free. Generating AI stories and illustrations uses app.nz credits — sign up free and get free credits to start creating.", "/pricing"),
+		"User":     s.user(ctx),
+		"Cfg":      s.cfg,
+		"LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/author"),
+	})
+}
+
+func (s *Server) handleSitemap(ctx *fasthttp.RequestCtx) {
+	var b strings.Builder
+	b.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+	b.WriteString("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n")
+	add := func(path, lastmod string) {
+		b.WriteString("<url><loc>")
+		b.WriteString(s.cfg.SiteBaseURL + path)
+		b.WriteString("</loc>")
+		if lastmod != "" {
+			b.WriteString("<lastmod>" + lastmod + "</lastmod>")
+		}
+		b.WriteString("</url>\n")
+	}
+	add("/", "")
+	add("/author", "")
+	add("/stories", "")
+	add("/pricing", "")
+	for _, name := range s.bookOrder {
+		add("/book/"+name, "")
+	}
+	if pub, err := s.stories.listPublic(500); err == nil {
+		for _, st := range pub {
+			add("/story/"+st.ID, st.UpdatedAt.UTC().Format("2006-01-02"))
+		}
+	}
+	b.WriteString("</urlset>\n")
+	ctx.SetContentType("application/xml; charset=utf-8")
+	ctx.WriteString(b.String())
 }
 
 func (s *Server) handleBook(ctx *fasthttp.RequestCtx, name string) {
@@ -186,9 +249,11 @@ func (s *Server) handleBook(ctx *fasthttp.RequestCtx, name string) {
 		return
 	}
 	view := ReaderView{
+		Meta:  s.meta(b.Title+" — Reading Time", "Read \""+b.Title+"\" together on Reading Time — each word lights up as it's read aloud, helping kids learn to read.", "/book/"+name),
 		Title: b.Title, AudioLink: b.AudioLink, SubsLink: b.SubsLink,
 		User: s.user(ctx), Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"), BackHref: "/",
 	}
+	view.Meta.Image = s.cfg.SiteBaseURL + "/static/kids-book-covers/" + b.CoverImageURL
 	counter := 0
 	for i, p := range b.Pages {
 		var html, next = renderPage(p.Words, i, counter)
@@ -217,7 +282,20 @@ func (s *Server) handleStoryReader(ctx *fasthttp.RequestCtx, id string) {
 		apiError(ctx, fasthttp.StatusForbidden, "this story is private")
 		return
 	}
-	view := ReaderView{Title: st.Title, User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"), BackHref: "/"}
+	desc := "\"" + st.Title + "\""
+	if st.AuthorName != "" {
+		desc += " by " + st.AuthorName
+	}
+	desc += " — an AI-generated picture book on Reading Time. Read along as each word lights up."
+	view := ReaderView{
+		Meta:  s.meta(st.Title+" — Reading Time", desc, "/story/"+st.ID),
+		Title: st.Title, User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"), BackHref: "/",
+	}
+	if c := storyCard(st).Cover; strings.HasPrefix(c, "/") {
+		view.Meta.Image = s.cfg.SiteBaseURL + c
+	} else {
+		view.Meta.Image = c
+	}
 	counter := 0
 	for i, p := range st.Pages {
 		words := p.Words
@@ -233,7 +311,12 @@ func (s *Server) handleStoryReader(ctx *fasthttp.RequestCtx, id string) {
 
 func (s *Server) handleNotFound(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusNotFound)
-	s.render(ctx, "404.html", map[string]any{"Cfg": s.cfg, "User": s.user(ctx), "LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/")})
+	s.render(ctx, "404.html", map[string]any{
+		"Meta":     Meta{Title: "Not found — Reading Time", Desc: siteDesc},
+		"Cfg":      s.cfg,
+		"User":     s.user(ctx),
+		"LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/"),
+	})
 }
 
 // ---------- JSON API ----------

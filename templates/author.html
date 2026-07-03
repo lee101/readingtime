@@ -1,4 +1,4 @@
-{{template "head" "Create a story — Reading Time"}}
+{{template "head" .Meta}}
 <body class="page-author">
 {{template "header" .}}
 
@@ -7,17 +7,20 @@
     <h1>✨ AI Story Studio</h1>
     <p>Describe an idea and generate a complete illustrated picture book. Pick your
        favourite text &amp; image models — every generation uses your
-       <a href="{{.Cfg.AccountURL}}">app.nz credits</a>.</p>
+       <a href="{{.Cfg.AccountURL}}">app.nz credits</a>
+       (<a href="/pricing">how pricing works</a>).</p>
   </div>
 
   {{if not .User}}
   <div class="signin-callout">
-    <p>Sign in with your <strong>app.nz</strong> account to generate &amp; save stories.</p>
-    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in to create</a>
+    <p>Fill in your story idea below — when you hit Generate you'll be asked to
+       sign in with a free <strong>app.nz</strong> account, which includes free
+       credits to get started.</p>
+    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in — it's free</a>
   </div>
   {{end}}
 
-  <form id="ideaForm" class="idea-card" {{if not .User}}data-locked="1"{{end}}>
+  <form id="ideaForm" class="idea-card">
     <label class="field full">
       <span>Story idea</span>
       <textarea id="prompt" rows="3" placeholder="A shy little dragon who learns to make friends at school"></textarea>

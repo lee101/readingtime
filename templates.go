@@ -28,6 +28,10 @@ func (s *Server) render(ctx *fasthttp.RequestCtx, name string, data any) {
 
 // --- view models ---
 
+type Meta struct {
+	Title, Desc, Canonical, Image string
+}
+
 // PageView is a fully resolved page ready for the reader template.
 type PageView struct {
 	HTML      template.HTML // pre-rendered reading-word spans
@@ -39,6 +43,7 @@ type PageView struct {
 
 // ReaderView drives reader.html for both sample books and AI stories.
 type ReaderView struct {
+	Meta      Meta
 	Title     string
 	AudioLink string
 	SubsLink  string

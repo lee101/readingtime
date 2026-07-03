@@ -1,0 +1,38 @@
+{{template "head" .Meta}}
+<body class="page-home">
+{{template "header" .}}
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Pricing &amp; credits</h1>
+    <p>Reading the library is free. Creating AI stories uses
+       <a href="https://app.nz">app.nz</a> credits.</p>
+  </div>
+</section>
+
+<section class="shelf">
+  <h2>How it works</h2>
+  <ul class="pricing-list">
+    <li><strong>Reading is free.</strong> Sample books, the <a href="/stories">story gallery</a>
+        and any story shared with you cost nothing to read.</li>
+    <li><strong>Generating uses credits.</strong> Writing a story and illustrating its pages
+        are metered against your app.nz credit balance — the same credits used across the
+        app.nz network.</li>
+    <li><strong>Free credits on signup.</strong> A free app.nz account includes free credits,
+        enough to create your first stories.</li>
+    <li><strong>Top up anytime.</strong> Buy more credits from your
+        <a href="{{.Cfg.AccountURL}}">app.nz account page</a>.</li>
+  </ul>
+  <div class="hero-cta">
+    {{if .User}}
+    <a class="btn btn-primary btn-lg" href="/author">✨ Start creating</a>
+    <a class="btn btn-ghost btn-lg" href="{{.Cfg.AccountURL}}">Manage credits</a>
+    {{else}}
+    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in free — includes credits</a>
+    <a class="btn btn-ghost btn-lg" href="/author">Try the story studio</a>
+    {{end}}
+  </div>
+</section>
+
+{{template "footer"}}
+</body></html>
