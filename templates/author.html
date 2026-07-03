@@ -1,0 +1,178 @@
+{{template "head" "Create a story — Reading Time"}}
+<body class="page-author">
+{{template "header" .}}
+
+<main class="author">
+  <div class="author-head">
+    <h1>✨ AI Story Studio</h1>
+    <p>Describe an idea and generate a complete illustrated picture book. Pick your
+       favourite text &amp; image models — every generation uses your
+       <a href="{{.Cfg.AccountURL}}">app.nz credits</a>.</p>
+  </div>
+
+  {{if not .User}}
+  <div class="signin-callout">
+    <p>Sign in with your <strong>app.nz</strong> account to generate &amp; save stories.</p>
+    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in to create</a>
+  </div>
+  {{end}}
+
+  <form id="ideaForm" class="idea-card" {{if not .User}}data-locked="1"{{end}}>
+    <label class="field full">
+      <span>Story idea</span>
+      <textarea id="prompt" rows="3" placeholder="A shy little dragon who learns to make friends at school"></textarea>
+    </label>
+    <div class="field-row">
+      <label class="field">
+        <span>Audience</span>
+        <input id="audience" value="ages 4-8">
+      </label>
+      <label class="field">
+        <span>Pages</span>
+        <input id="pages" type="number" min="3" max="16" value="8">
+      </label>
+      <label class="field">
+        <span>Story model</span>
+        <select id="textModel"></select>
+      </label>
+      <label class="field">
+        <span>Image model</span>
+        <select id="imageModel"></select>
+      </label>
+    </div>
+    <label class="field full">
+      <span>Art style (optional)</span>
+      <input id="style" placeholder="soft watercolour, warm light, storybook illustration">
+    </label>
+    <div class="idea-actions">
+      <button type="submit" id="genBtn" class="btn btn-primary btn-lg">Generate story</button>
+      <span id="genStatus" class="status"></span>
+    </div>
+  </form>
+
+  <section id="workspace" class="workspace" hidden>
+    <div class="workspace-bar">
+      <input id="title" class="title-input" placeholder="Story title">
+      <div class="workspace-actions">
+        <button id="illustrateAll" class="btn btn-ghost">🎨 Illustrate all</button>
+        <label class="toggle"><input type="checkbox" id="public"> Share publicly</label>
+        <button id="saveBtn" class="btn btn-primary">Save book</button>
+      </div>
+    </div>
+    <div id="pages" class="pages"></div>
+    <div id="saveResult" class="save-result"></div>
+  </section>
+</main>
+
+{{template "footer"}}
+
+<script>
+const signedIn = {{if .User}}true{{else}}false{{end}};
+const loginUrl = {{.LoginURL}};
+let story = { title: "", pages: [] };
+
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function status(msg, kind){ const s=document.getElementById('genStatus'); s.textContent=msg||''; s.className='status'+(kind?' '+kind:''); }
+
+async function loadModels(){
+  try{
+    const r = await fetch('/api/models'); const d = await r.json();
+    fill('textModel', d.text||[]); fill('imageModel', d.image||[]);
+  }catch(e){ /* keep empty */ }
+}
+function fill(id, list){
+  const sel=document.getElementById(id); sel.innerHTML='';
+  if(!list.length){ sel.appendChild(new Option('auto','auto')); return; }
+  list.forEach(m=> sel.appendChild(new Option(m, m)));
+}
+
+function renderPages(){
+  const wrap=document.getElementById('pages'); wrap.innerHTML='';
+  story.pages.forEach((p, i)=>{
+    const card=el('div','page-card');
+    const num=el('div','page-num', 'Page '+(i+1));
+    const ta=el('textarea','page-text'); ta.value=p.text||''; ta.rows=3;
+    ta.oninput=()=>{ p.text=ta.value; };
+    const ip=el('input','page-imgprompt'); ip.value=p.image_prompt||''; ip.placeholder='illustration prompt';
+    ip.oninput=()=>{ p.image_prompt=ip.value; };
+    const preview=el('div','page-preview');
+    if(p.image_url){ const im=el('img'); im.src=p.image_url; preview.appendChild(im); }
+    else { preview.appendChild(el('div','page-preview-blank','🖼️')); }
+    const ill=el('button','btn btn-ghost btn-sm', p.image_url?'Re-illustrate':'🎨 Illustrate');
+    ill.onclick=(e)=>{ e.preventDefault(); illustrate(i, ill, preview); };
+    const right=el('div','page-right'); right.append(ip, ill, preview);
+    const left=el('div','page-left'); left.append(num, ta);
+    card.append(left, right); wrap.appendChild(card);
+  });
+}
+
+async function illustrate(i, btn, preview){
+  if(!signedIn) return location.href=loginUrl;
+  const p=story.pages[i];
+  if(!(p.image_prompt||'').trim()){ alert('Add an illustration prompt first.'); return; }
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='Painting…';
+  try{
+    const r=await fetch('/api/story/illustrate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:p.image_prompt, model:document.getElementById('imageModel').value, style:document.getElementById('style').value})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'failed');
+    p.image_url=d.url;
+    preview.innerHTML=''; const im=el('img'); im.src=d.url; preview.appendChild(im);
+    btn.textContent='Re-illustrate';
+  }catch(e){ alert('Illustration failed: '+e.message); btn.textContent=orig; }
+  finally{ btn.disabled=false; }
+}
+
+document.getElementById('illustrateAll').onclick=async(e)=>{
+  e.preventDefault();
+  const cards=[...document.querySelectorAll('.page-card')];
+  for(let i=0;i<story.pages.length;i++){
+    const btn=cards[i].querySelector('.page-right button');
+    const preview=cards[i].querySelector('.page-preview');
+    await illustrate(i, btn, preview);
+  }
+};
+
+document.getElementById('ideaForm').onsubmit=async(e)=>{
+  e.preventDefault();
+  if(!signedIn) return location.href=loginUrl;
+  const prompt=document.getElementById('prompt').value.trim();
+  if(!prompt){ status('Describe your story idea first.','err'); return; }
+  const btn=document.getElementById('genBtn'); btn.disabled=true;
+  status('Writing your story…','busy');
+  try{
+    const r=await fetch('/api/story/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt, audience:document.getElementById('audience').value,
+        pages:parseInt(document.getElementById('pages').value)||8, model:document.getElementById('textModel').value})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'failed');
+    story={ title:d.title||'My Story', pages:(d.pages||[]).map(p=>({text:p.text||'', image_prompt:p.image_prompt||'', image_url:''})) };
+    document.getElementById('title').value=story.title;
+    document.getElementById('workspace').hidden=false;
+    renderPages(); status('Story ready — edit, illustrate, then save!','ok');
+    document.getElementById('workspace').scrollIntoView({behavior:'smooth'});
+  }catch(e){ status('Generation failed: '+e.message,'err'); }
+  finally{ btn.disabled=false; }
+};
+
+document.getElementById('saveBtn').onclick=async(e)=>{
+  e.preventDefault();
+  if(!signedIn) return location.href=loginUrl;
+  const out=document.getElementById('saveResult');
+  out.textContent='Saving…';
+  try{
+    const r=await fetch('/api/story/save',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ id:story.id||'', title:document.getElementById('title').value,
+        prompt:document.getElementById('prompt').value, text_model:document.getElementById('textModel').value,
+        image_model:document.getElementById('imageModel').value, public:document.getElementById('public').checked,
+        pages:story.pages.map(p=>({text:p.text, image_url:p.image_url})) })});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'failed');
+    story.id=d.id;
+    out.innerHTML='Saved! <a href="'+d.url+'">Open your book →</a>';
+  }catch(e){ out.textContent='Save failed: '+e.message; }
+};
+
+loadModels();
+</script>
+</body></html>

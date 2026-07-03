@@ -1,0 +1,57 @@
+{{template "head" "Reading Time — AI storytelling & reading app for kids"}}
+<body class="page-home">
+{{template "header" .}}
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Stories that teach kids to read.</h1>
+    <p>Read along as each word lights up — or become an author: generate a whole
+       illustrated picture book with AI, choosing your favourite story and image models.
+       Powered by your <a href="https://app.nz">app.nz</a> account &amp; credits.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="/author">✨ Create a story</a>
+      <a class="btn btn-ghost btn-lg" href="#library">Browse the library</a>
+    </div>
+  </div>
+</section>
+
+{{if .MyStories}}
+<section class="shelf" id="mine">
+  <h2>Your stories</h2>
+  <div class="grid">
+    {{range .MyStories}}{{template "card" .}}{{end}}
+  </div>
+</section>
+{{end}}
+
+<section class="shelf" id="library">
+  <h2>Sample books</h2>
+  <div class="grid">
+    {{range .Samples}}{{template "card" .}}{{end}}
+  </div>
+</section>
+
+{{if .PublicStories}}
+<section class="shelf" id="community">
+  <h2>Made with AI by the community</h2>
+  <div class="grid">
+    {{range .PublicStories}}{{template "card" .}}{{end}}
+  </div>
+</section>
+{{end}}
+
+{{template "footer"}}
+</body></html>
+
+{{define "card"}}
+<a class="card" href="{{.Href}}">
+  <div class="card-cover">
+    {{if .Cover}}<img src="{{.Cover}}" alt="{{.Title}}" loading="lazy">
+    {{else}}<div class="card-cover-blank">📖</div>{{end}}
+  </div>
+  <div class="card-meta">
+    <span class="card-title">{{.Title}}</span>
+    {{if .Author}}<span class="card-author">by {{.Author}}</span>{{end}}
+  </div>
+</a>
+{{end}}

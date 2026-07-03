@@ -1,0 +1,27 @@
+[Unit]
+Description=readingtime.app.nz — AI storytelling & reading app
+After=network.target
+
+[Service]
+Type=simple
+User=administrator
+WorkingDirectory=/nvme0n1-disk/code/readingtime
+ExecStart=/nvme0n1-disk/code/readingtime/readingtime
+Environment=PORT=4337
+Environment=DEV=false
+Environment=SITE_BASE_URL=https://readingtime.app.nz
+# Shared app.nz SSO/billing DB (read here for the signed-in user). Same file
+# papers.app.nz shares — this is what makes app.nz login work seamlessly.
+Environment=APPNZ_DATABASE_PATH=/nvme0n1-disk/data/appnz-sso.db
+# Local app.nz AI gateway: story text + page images. The user's session cookie
+# is forwarded so generation is metered against their app.nz credits.
+Environment=GATEWAY_URL=http://127.0.0.1:8787
+Environment=APPNZ_LOGIN_URL=https://app.nz/login
+Environment=APPNZ_ACCOUNT_URL=https://app.nz/account
+Restart=always
+RestartSec=3
+MemoryHigh=2G
+MemoryMax=3G
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,44 @@
+{{define "head"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.}}</title>
+<link rel="icon" href="/static/img/favicon.ico">
+<link href="/static/css/app.css" rel="stylesheet">
+</head>{{end}}
+
+{{define "header"}}
+<header class="site-header">
+  <a class="brand" href="/">
+    <img src="/static/img/reading-time-icon32.png" alt="" width="28" height="28" onerror="this.style.display='none'">
+    <span>Reading&nbsp;Time</span>
+    <em>· app.nz</em>
+  </a>
+  <nav class="site-nav">
+    <a href="/">Library</a>
+    <a href="/author" class="nav-create">✨ Create</a>
+    {{if .User}}
+      <a class="chip" href="{{.Cfg.AccountURL}}" title="app.nz credits">
+        <strong>{{.User.Credits}}</strong> credits
+      </a>
+      <span class="chip user-chip">{{.User.DisplayName}}</span>
+      <a class="nav-signout" href="/logout" title="Sign out of app.nz">Sign out</a>
+    {{else}}
+      <a class="btn btn-primary" href="{{.LoginURL}}">Sign in</a>
+    {{end}}
+  </nav>
+</header>
+{{end}}
+
+{{define "footer"}}
+<footer class="site-footer">
+  <span>Reading Time — an AI storytelling &amp; reading app on the
+    <a href="https://app.nz">app.nz</a> network.</span>
+  <span class="net">
+    <a href="https://app.nz">app.nz</a> ·
+    <a href="https://papers.app.nz">Papers</a> ·
+    <a href="https://gpubrain.app.nz">GpuBrain</a>
+  </span>
+</footer>
+{{end}}

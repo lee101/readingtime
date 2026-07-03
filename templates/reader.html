@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} — Reading Time</title>
+<link rel="icon" href="/static/img/favicon.ico">
+<link rel="stylesheet" href="/static/bower_components/reveal.js/css/reveal.css">
+<link rel="stylesheet" href="/static/bower_components/reveal.js/css/theme/black.css">
+<link href="/static/css/style.css" rel="stylesheet">
+<link href="/static/css/app.css" rel="stylesheet">
+<script>
+  var subs_link;
+  {{if .SubsLink}}subs_link = "{{.SubsLink}}";{{end}}
+</script>
+<script src="/static/bower_components/jquery/dist/jquery.js"></script>
+<script src="/static/bower_components/reveal.js/js/reveal.js"></script>
+<script src="/static/js/readingtime.js"></script>
+</head>
+<body class="reader-body">
+<div class="reader-topbar">
+  <a class="reader-back" href="{{.BackHref}}">← Library</a>
+  <span class="reader-title">{{.Title}}</span>
+  {{if .User}}<span class="reader-user">{{.User.DisplayName}}</span>
+  {{else}}<a class="reader-back" href="{{.LoginURL}}">Sign in</a>{{end}}
+</div>
+
+<div class="rt-body">
+  <div class="reveal">
+    <div class="slides">
+      {{if .AudioLink}}
+      <audio id="audioLink" preload="auto" autoplay>
+        <source src="{{.AudioLink}}" type="audio/mpeg">
+      </audio>
+      {{end}}
+      {{range .Pages}}
+      {{$col := eq .Layout "column"}}
+      <section>
+        <p class="page-words{{if $col}} right{{end}}{{if .DarkColor}} dark-words{{end}}"{{if .CSS}} style="{{.CSS}}"{{end}}>{{.HTML}}</p>
+        {{if .Image}}<img class="{{if $col}}left{{end}}" src="{{.Image}}" alt="{{$.Title}}">{{end}}
+        <div class="clear clearfix"></div>
+      </section>
+      {{end}}
+    </div>
+  </div>
+</div>
+</body></html>
