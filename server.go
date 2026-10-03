@@ -21,6 +21,7 @@ type Server struct {
 	bookOrder []string
 	stories   *storyStore
 	auth      *authStore
+	billing   *billing
 	gw        *gatewayClient
 	tmpl      *template.Template
 }
@@ -34,14 +35,32 @@ func main() {
 	}
 	log.Printf("loaded %d sample books", len(books))
 
-	stories, err := newStoryStore(cfg.DBPath)
+	pg, err := openPG(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("postgres: %v", err)
+	}
+	if err := importLegacySQLite(pg, cfg.DBPath); err != nil {
+		log.Fatalf("legacy sqlite import: %v", err)
+	}
+	stories, err := newStoryStore(pg)
 	if err != nil {
 		log.Fatalf("stories db: %v", err)
 	}
 
-	auth, err := newAuthStore(cfg.AppNZDatabasePath)
+	auth, err := newAuthStore(pg)
 	if err != nil {
-		log.Printf("auth store unavailable (%v) — running without sign-in", err)
+		log.Fatalf("auth store: %v", err)
+	}
+
+	bill, err := newBilling(stories.db, cfg)
+	if err != nil {
+		log.Fatalf("billing: %v", err)
+	}
+	if err := bill.initFree(); err != nil {
+		log.Fatalf("free reads: %v", err)
+	}
+	if !bill.enabled() {
+		log.Printf("STRIPE_SECRET_KEY unset — checkout disabled")
 	}
 
 	tmpl, err := loadTemplates()
@@ -55,6 +74,7 @@ func main() {
 		bookOrder: order,
 		stories:   stories,
 		auth:      auth,
+		billing:   bill,
 		gw:        newGatewayClient(cfg.GatewayURL),
 		tmpl:      tmpl,
 	}
@@ -88,6 +108,15 @@ func main() {
 		case path == "/stories" && method == "GET":
 			srv.handleStories(ctx)
 
+		case path == "/api/audio/page" && (method == "GET" || method == "POST"):
+			srv.handleAudioPage(ctx)
+
+		case path == "/api/search" && method == "GET":
+			srv.handleSearch(ctx)
+
+		case path == "/api/search/index" && method == "GET":
+			srv.handleSearchIndex(ctx)
+
 		case path == "/pricing" && method == "GET":
 			srv.handlePricing(ctx)
 
@@ -97,6 +126,12 @@ func main() {
 		case path == "/login" && method == "GET":
 			srv.handleLogin(ctx)
 
+		case path == "/api/auth/signup" && method == "POST":
+			srv.handleSignup(ctx)
+
+		case path == "/api/auth/login" && method == "POST":
+			srv.handleLoginPost(ctx)
+
 		case path == "/logout" && (method == "GET" || method == "POST"):
 			srv.handleLogout(ctx)
 
@@ -105,6 +140,27 @@ func main() {
 
 		case strings.HasPrefix(path, "/story/") && method == "GET":
 			srv.handleStoryReader(ctx, strings.TrimPrefix(path, "/story/"))
+
+		case path == "/api/billing/checkout" && method == "POST":
+			srv.handleCheckout(ctx)
+
+		case path == "/api/billing/portal" && method == "POST":
+			srv.handlePortal(ctx)
+
+		case path == "/webhook/stripe" && method == "POST":
+			srv.handleStripeWebhook(ctx)
+
+		case path == "/api/story/get" && method == "GET":
+			srv.handleGetStory(ctx)
+
+		case path == "/api/story/assist" && method == "POST":
+			srv.handleAssist(ctx)
+
+		case path == "/account" && method == "GET":
+			srv.handleAccount(ctx)
+
+		case path == "/api/account" && method == "GET":
+			srv.handleAccountAPI(ctx)
 
 		case path == "/api/me" && method == "GET":
 			srv.handleMe(ctx)
@@ -133,6 +189,8 @@ func main() {
 
 		case strings.HasPrefix(path, "/static/"):
 			staticFS(ctx)
+			ctx.Response.Header.Set("Cache-Control", "public, max-age=600, must-revalidate")
+			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
 		default:
 			srv.handleNotFound(ctx)

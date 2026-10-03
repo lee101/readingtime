@@ -63,6 +63,16 @@ def test_parse_pages():
             art.parse_pages(bad, 11)
 
 
+def test_seed_salt_rerolls_one_page():
+    plain = art.seed_for("manuscripts/accessible/01-x.md", 4)
+    assert plain == art.seed_for("manuscripts/accessible/01-x.md", 4)
+    assert art.seed_for("manuscripts/accessible/01-x.md", 4, 1) not in (plain,)
+    assert art.seed_for("manuscripts/accessible/01-x.md", 4, 0) == plain
+    assert art.seed_for("manuscripts/accessible/01-x.md", 4, 1) != art.seed_for(
+        "manuscripts/accessible/01-x.md", 4, 2
+    )
+
+
 def test_check_world(tmp_path):
     (tmp_path / "real.md").write_text("x")
     art.check_world("real", tmp_path)
@@ -79,6 +89,25 @@ def test_single_child_clause():
 def test_prompt_strips_and_adds_clause():
     base = art.compose_prompt("A scene. " + art.NO_TEXT_CLAUSE, "style.", "accessible", 2, 5)
     assert base.count(art.NO_TEXT_CLAUSE) == 1
+
+
+def test_style_preset_changes_the_medium():
+    item = {"level": "intermediate", "audience": "Ages 9–12"}
+    painterly = covers.art_direction(item)
+    anime = covers.art_direction(item, "anime")
+    assert painterly != anime
+    assert "anime" in anime and "anime" not in painterly
+    comic = covers.art_direction(item, "comic")
+    assert "ink" in comic and "anime" not in comic and "painterly" not in comic
+    for preset in sorted(covers.MEDIUM_BY_STYLE):
+        for level in ("accessible", "intermediate", "advanced"):
+            assert covers.MEDIUM_BY_STYLE[preset][level]
+    page = art.compose_prompt("A scene.", "style.", "advanced", 2, 5, "anime")
+    assert "anime" in page and "painterly" not in page
+    assert "painterly" in art.compose_prompt("A scene.", "style.", "advanced", 2, 5)
+    for preset in sorted(art.MEDIUM_BY_STYLE):
+        for level in ("accessible", "intermediate", "advanced"):
+            assert art.MEDIUM_BY_STYLE[preset][level][0]
 
 
 def test_request_page_parses_b64(monkeypatch):

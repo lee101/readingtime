@@ -1,0 +1,44 @@
+{{template "head" .Meta}}
+<body class="page-home">
+{{template "header" .}}
+<section class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <a href="/login?next={{.Next}}" class="auth-tab{{if eq .Mode "login"}} on{{end}}" data-mode="login">Sign in</a>
+      <a href="/login?mode=signup&next={{.Next}}" class="auth-tab{{if eq .Mode "signup"}} on{{end}}" data-mode="signup">Create account</a>
+    </div>
+    <form id="authForm" autocomplete="on">
+      <label class="field full su"><span>Name (optional)</span><input name="handle" autocomplete="nickname" maxlength="40"></label>
+      <label class="field full"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+      <label class="field full"><span>Password</span><input name="password" type="password" autocomplete="current-password" minlength="8" maxlength="72" required></label>
+      <button class="btn btn-primary btn-lg" id="authBtn" type="submit"></button>
+      <div class="status" id="authMsg" role="alert"></div>
+    </form>
+  </div>
+</section>
+{{template "footer"}}
+<script>
+(function(){
+  var mode={{.Mode}}, next={{.Next}};
+  var f=document.getElementById('authForm'), btn=document.getElementById('authBtn'), msg=document.getElementById('authMsg');
+  function apply(){
+    document.querySelectorAll('.su').forEach(function(e){e.style.display=mode==='signup'?'':'none'});
+    f.password.autocomplete=mode==='signup'?'new-password':'current-password';
+    btn.textContent=mode==='signup'?'Create account':'Sign in';
+    document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('on',t.dataset.mode===mode)});
+  }
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.addEventListener('click',function(e){e.preventDefault();mode=t.dataset.mode;msg.textContent='';apply()})});
+  f.addEventListener('submit',async function(e){
+    e.preventDefault(); btn.disabled=true; msg.className='status busy'; msg.textContent='Working...';
+    try{
+      var r=await fetch('/api/auth/'+(mode==='signup'?'signup':'login'),{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:f.email.value,password:f.password.value,handle:f.handle.value,next:next})});
+      var j=await r.json();
+      if(!r.ok){msg.className='status err';msg.textContent=j.error||'Failed';btn.disabled=false;return}
+      location.href=j.next||'/';
+    }catch(x){msg.className='status err';msg.textContent='Network error';btn.disabled=false}
+  });
+  apply();
+})();
+</script>
+</body></html>

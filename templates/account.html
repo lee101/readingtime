@@ -1,0 +1,42 @@
+{{template "head" .Meta}}
+<body class="page-author">
+{{template "header" .}}
+<main class="author">
+  <div class="author-head"><h1>Your account</h1><p id="who">&nbsp;</p></div>
+  <div class="idea-card" id="planCard">
+    <h3 style="margin:0">Plan</h3>
+    <div id="planBody">Loading…</div>
+  </div>
+  <h2 style="margin-top:28px">Your stories</h2>
+  <div id="stories" class="pages"></div>
+  <p style="margin-top:28px"><button id="signout" class="btn btn-ghost">Sign out</button></p>
+</main>
+{{template "footer"}}
+<script src="/static/js/billing.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+async function load(){
+  const r=await fetch('/api/account');
+  if(r.status===401){ location.href='/login?next=/account'; return; }
+  const d=await r.json();
+  $('who').textContent=d.email;
+  const s=d.subscription;
+  $('planBody').innerHTML = s.active
+    ? '<p><strong>Reading Time Unlimited</strong> — active'+(s.renews_at?', renews '+esc(s.renews_at):'')+'.</p><button class="btn btn-ghost" onclick="manageBilling(this)">Manage billing</button>'
+    : '<p>Free plan — one free book. Go Unlimited for every story and unlimited AI writing and art.</p><a class="btn btn-primary" href="/pricing">See plans</a>';
+  const w=$('stories'); w.innerHTML='';
+  if(!d.stories.length) w.innerHTML='<p class="fine">No stories yet. <a href="/author">Create one</a>.</p>';
+  d.stories.forEach(st=>{
+    const row=document.createElement('div'); row.className='page-card'; row.style.gridTemplateColumns='1fr auto';
+    row.innerHTML='<div><strong>'+esc(st.title)+'</strong><div class="fine">'+st.pages+' pages · '+st.minutes+' min · '+(st.public?'published':'private')+'</div></div>'+
+      '<div class="page-tools"><a class="btn btn-ghost btn-sm" href="'+st.url+'">Read</a><a class="btn btn-ghost btn-sm" href="'+st.edit+'">Edit</a><button class="btn btn-ghost btn-sm">Delete</button></div>';
+    row.querySelector('button').onclick=async()=>{ if(!confirm('Delete "'+st.title+'"?')) return;
+      await fetch('/api/story/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:st.id})}); load(); };
+    w.appendChild(row);
+  });
+}
+$('signout').onclick=async()=>{ await fetch('/logout',{method:'POST'}); location.href='/'; };
+load();
+</script>
+</body></html>

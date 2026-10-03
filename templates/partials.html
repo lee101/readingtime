@@ -26,7 +26,6 @@
   <a class="brand" href="/">
     <img src="/static/img/reading-time-icon32.png" alt="" width="28" height="28" onerror="this.style.display='none'">
     <span>Reading&nbsp;Time</span>
-    <em>· app.nz</em>
   </a>
   <nav class="site-nav">
     <a href="/">Library</a>
@@ -34,26 +33,63 @@
     <a href="/pricing">Pricing</a>
     <a href="/author" class="nav-create">✨ Create</a>
     {{if .User}}
-      <a class="chip" href="{{.Cfg.AccountURL}}" title="app.nz credits">
-        <strong>{{.User.Credits}}</strong> credits
-      </a>
-      <span class="chip user-chip">{{.User.DisplayName}}</span>
-      <a class="nav-signout" href="/logout" title="Sign out of app.nz">Sign out</a>
+      {{if .User.Sub}}<a class="chip chip-pro" href="/pricing">Unlimited</a>
+      {{else}}<a class="chip" href="/pricing" title="Go Unlimited">Go Unlimited</a>{{end}}
+      <a class="chip user-chip" href="/account">{{.User.DisplayName}}</a>
+      <a class="nav-signout" href="/logout" title="Sign out" onclick="return rtSignOut(event)">Sign out</a>
     {{else}}
       <a class="btn btn-primary" href="{{.LoginURL}}">Sign in</a>
     {{end}}
   </nav>
 </header>
+<script>
+async function rtSignOut(e){
+  e.preventDefault();
+  try{ await fetch('/logout',{method:'POST'}); }catch(x){}
+  location.href='/';
+  return false;
+}
+</script>
 {{end}}
 
 {{define "footer"}}
 <footer class="site-footer">
-  <span>Reading Time — an AI storytelling &amp; reading app on the
-    <a href="https://app.nz">app.nz</a> network.</span>
-  <span class="net">
-    <a href="https://app.nz">app.nz</a> ·
-    <a href="https://papers.app.nz">Papers</a> ·
-    <a href="https://gpubrain.app.nz">GpuBrain</a>
-  </span>
+  <span>Reading Time — AI storytelling &amp; reading for kids.</span>
+  <span class="net"><a href="/stories">Stories</a> · <a href="/pricing">Pricing</a> · <a href="/author">Create</a></span>
+  <span class="net"><a href="https://github.com/lee101/readingtime" rel="noopener">Source</a> · AGPL-3.0</span>
 </footer>
+{{end}}
+
+{{define "search"}}
+<form class="search" role="search" method="get">
+  <input id="q" name="q" type="search" value="{{.Q}}" placeholder="Search stories, authors, words…" autocomplete="off" aria-label="Search stories" data-rt-search>
+</form>
+<section class="shelf" id="search-results" aria-live="polite"{{if not .Q}} hidden{{end}}>
+  <h2 id="search-title">{{if .Q}}{{len .Results}} result{{if ne (len .Results) 1}}s{{end}} for “{{.Q}}”{{end}}</h2>
+  <div class="grid" id="search-grid">{{range .Results}}{{template "card" .}}{{end}}</div>
+</section>
+<script src="/static/js/search.js" defer></script>
+{{end}}
+
+{{define "orderbar"}}
+{{if .Orders}}
+<nav class="bands bands-order" aria-label="Order stories">
+  <span class="bands-label">Order</span>
+  {{range .Orders}}<a class="band{{if .Active}} band-on{{end}}" href="{{.Href}}">{{.Label}}</a>{{end}}
+  {{if .OrderActive}}<a class="band band-shuffle" id="rt-reshuffle" href="{{.Reshuffle}}" title="Deal them out again">Shuffle again</a>{{end}}
+</nav>
+{{end}}
+<script>
+(function(){
+  var b = document.getElementById('rt-reshuffle');
+  if(!b) return;
+  b.addEventListener('click', function(e){
+    e.preventDefault();
+    var u = new URL(location.href);
+    u.searchParams.set('o','mix');
+    u.searchParams.set('s', Date.now());
+    location.href = u.pathname + u.search;
+  });
+})();
+</script>
 {{end}}

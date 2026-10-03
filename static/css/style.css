@@ -327,7 +327,7 @@ body {
 }
 .reveal .slides {
   margin: 0;
-  width: 99% !important;
+  width: 100% !important;
   height: 100% !important;
 }
 .reveal p,

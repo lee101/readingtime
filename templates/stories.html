@@ -14,16 +14,25 @@
   </div>
 </section>
 
+{{template "search" .}}
+<div id="browse"{{if .Q}} hidden{{end}}>
 <section class="shelf" id="gallery">
-  <h2>Community stories</h2>
-  {{if .PublicStories}}
+  {{if .Bands}}
+  <nav class="bands" aria-label="Filter by reading time">
+    <span class="bands-label">Reading time</span>
+    {{range .Bands}}<a class="band{{if .Active}} band-on{{end}}" href="{{.Href}}">{{.Label}} <b>{{.Count}}</b></a>{{end}}
+  </nav>
+  {{end}}
+{{template "orderbar" .}}
+  {{if .Library}}
   <div class="grid">
-    {{range .PublicStories}}{{template "card" .}}{{end}}
+    {{range .Library}}{{template "card" .}}{{end}}
   </div>
   {{else}}
   <p>No public stories yet — <a href="/author">be the first to create one</a>.</p>
   {{end}}
 </section>
+</div>
 
 {{template "footer"}}
 </body></html>

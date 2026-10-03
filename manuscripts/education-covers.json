@@ -1,0 +1,148 @@
+{
+  "covers": [
+    {
+      "path": "manuscripts/accessible/36-the-seed-that-caught-the-sun.md",
+      "title": "The Seed That Caught the Sun",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's science-storybook illustration inside a magical garden: a young gardener kneels beside a glowing seed whose green shoot reaches toward a warm sunbeam, while nearby leaves release tiny sparkles of light and roots drink clear water from the soil. Cross-section details show water traveling upward and sugars traveling through the plant, but keep the scene warm and magical rather than diagrammatic. The child, seed, sunbeam, leaf, and roots form a clear vertical chain of connection. Hopeful natural light, rich greens and golds, scientifically suggestive, no text, labels, letters, or writing."
+    },
+    {
+      "path": "manuscripts/accessible/37-the-moons-shape-machine.md",
+      "title": "The Moon’s Shape Machine",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's astronomy storybook scene on a rooftop observatory: two children watch a glowing full Moon while a simple non-text orrery model shows the Moon circling Earth and always reflecting sunlight. A dark lantern and pale ball on a stick help them compare lit and unlit halves, and a row of moon shapes curves across the sky. Make the children, Earth, Moon, and changing illuminated shape scientifically clear and magical, with deep blue night, warm lantern light, no written diagrams, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/accessible/38-the-bridge-of-hidden-triangles.md",
+      "title": "The Bridge of Hidden Triangles",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's engineering fantasy cover: three young builders assemble a small wooden bridge over a glowing stream, revealing a repeating web of sturdy triangular braces beneath the deck. One child tests a loose beam while the others compare a strong triangle frame with a wobbling square frame, and a gentle storm cloud waits beyond the completed bridge. Emphasize shapes, shared load, testing, and repair through action. Warm workshop colors, clear silhouettes, safe adventure, no written measurements, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/accessible/39-raindrops-journey.md",
+      "title": "Raindrop’s Journey",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's water-cycle storybook illustration following one friendly raindrop on a grand vertical journey: it falls from a dark cloud onto a hillside spring, flows into a stream and river, warms into rising vapor above sunlit fields, gathers into a new cloud, and begins another rain drop. Tiny fish, roots, bridges, and children appear along the route to show connected movement without labels. The recurring raindrop is the visual guide. Bright blues, greens, and golden light, magical realism, no arrows containing text, letters, numbers, or writing."
+    },
+    {
+      "path": "manuscripts/accessible/40-the-forest-under-one-leaf.md",
+      "title": "The Forest Under One Leaf",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's ecosystem illustration looking beneath one enormous fallen leaf in a rich forest: mushrooms, fungi threads, beetles, worms, bacteria, roots, and small decomposing leaves form a busy underground community while birds and a squirrel remain above. Nutrients glow gently as leaf matter breaks down and returns to the soil, with roots reaching toward the restored minerals. Make decomposers and the forest food web feel important rather than scary. Warm earthy colors, clear layers, no written labels, arrows, letters, or text."
+    },
+    {
+      "path": "manuscripts/accessible/41-the-sundial-at-the-end-of-the-yard.md",
+      "title": "The Sundial at the End of the Yard",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical schoolyard storybook scene at changing times of day: children observe a handmade sundial whose upright gnomon casts a moving shadow across a circular stone dial marked only with objects and light, not writing. One child records the shadow's changing direction with colored pebbles while classmates hold a bright ball and a globe model to connect sunlight and Earth's turning. Golden morning, high midday, violet evening, and early stars appear around the same central sundial. No numbers, letters, clock faces with text, or written labels."
+    },
+    {
+      "path": "manuscripts/intermediate/22-the-map-with-twelve-noons.md",
+      "title": "The Map with Twelve Noons",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical young-adventurer map-room scene: a traveler stands before a magical world map where twelve coastal cities each experience a different kind of noon while one bright sunbeam travels around a large rotating Earth. A clockwork train carries the traveler toward a distant date line, with dawn, daylight, dusk, and night visible across neighboring regions. Include mountain shadows and a clear east-west rotation without readable labels. Emphasize time zones, shared time, and local noon through wonder, rich cartographic texture, no text or numbers."
+    },
+    {
+      "path": "manuscripts/intermediate/23-the-seed-bank-at-the-end-of-winter.md",
+      "title": "The Seed Bank at the End of Winter",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical educational fantasy scene inside a mountain seed-bank vault at late winter: young caretakers open frost-safe drawers containing many visibly different seeds, then place samples in moist trays where some remain dormant while others begin to germinate under controlled light. A flood-shaped magical threat outside motivates preserving genetic variety, and a diverse group of plants is shown growing together. Make dormancy, water, temperature, air, and diversity understandable through action and contrast. Warm vault light, scientific wonder, no written labels, letters, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/24-the-pollen-detectives.md",
+      "title": "The Pollen Detectives",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical field-investigation storybook scene: young detectives kneel among colorful flowers with hand lenses and transparent evidence jars, tracking distinct pollen grains from nectar-rich blossoms to visiting bees, butterflies, moths, and a wind-carried seed. A nearby fruit tree depends on the same movement, and a simple food-web relationship becomes visible through their careful observations. Show multiple pollination routes without claiming every flower uses the same method. Bright meadow colors, detective energy, clear scientific detail, no text, labels, arrows containing words, or writing."
+    },
+    {
+      "path": "manuscripts/intermediate/25-the-whale-who-mapped-by-sound.md",
+      "title": "The Whale Who Mapped by Sound",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical underwater research-fantasy cover: a young ocean scientist watches a humpback whale send curved pulses of sound through deep blue water, receiving returning echoes that reveal the shape of a hidden canyon and the distance to nearby cliffs. Other whales call across the scene while surface waves and noisy boats threaten to blur the acoustic map. The whale, sound paths, canyon, and listening team are the focus. Scientifically suggestive, awe-filled, no equations, written labels, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/26-the-fair-share-fair.md",
+      "title": "The Fair Share Fair",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical marketplace-math fantasy scene: young stallholders divide a magically replenishing cake, jars, and colored tokens among visitors using transparent fraction models, equal shares, and a clearly visible chance wheel whose outcomes are observable rather than rigged. One child initially takes an unclear fraction, then tests a fair rule with repeated trials and counts outcomes using tokens. Show fractions, equivalence, probability, and cooperative problem-solving through action. Clear shapes and warm fairground colors, no written numbers, equations, letters, signs with text, or labels."
+    },
+    {
+      "path": "manuscripts/intermediate/27-the-map-that-shrank-the-city.md",
+      "title": "The Map That Shrank the City",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical cartography adventure: two young mapmakers compare a huge real city with a beautifully drawn miniature map whose familiar-looking shape has shrunk some distant neighborhoods and enlarged others. They use a physical scale bar, repeated route lengths, and a flexible globe-like surface to discover that a flat map must distort something. Their repaired map combines a consistent scale with honest symbols, and a resident points out what the first version missed. Thoughtful adventure, richly detailed paper and streets, no readable place names, numbers, letters, or text."
+    },
+    {
+      "path": "manuscripts/advanced/19-the-light-that-kept-its-fingerprint.md",
+      "title": "The Light That Kept Its Fingerprint",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical advanced astronomy mystery: teenage researchers pass an unfamiliar starlight through a prism and observatory instruments, seeing a broad spectrum crossed by narrow dark and bright lines. A cloud of glowing gas produces its own distinctive spectral pattern, allowing the team to identify a real element without depicting letters. On a comparison board, repeated observations separate evidence from an attractive guess, and a distant object is tested rather than declared from imagination. Sophisticated scientific realism, dramatic but controlled, no readable equations, labels, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/advanced/20-the-city-ran-a-fever.md",
+      "title": "The City That Ran a Fever",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical urban-climate investigation: a diverse youth team maps intense heat across a dense city using identical sensors along shaded parks, dark roofs, wide roads, and treeless neighborhoods.Sunlight, trapped heat, building materials, and reduced cooling airflow form the visual explanation, while a proposed tree and reflective-roof plan is tested block by block. A vulnerable resident's experience informs interpretation without being used as a simplistic prop. Mature civic science, nuanced tradeoffs, no heat-map numbers, written legends, letters, or text."
+    },
+    {
+      "path": "manuscripts/advanced/21-the-map-that-remembered-everyone.md",
+      "title": "The Map That Remembered Everyone",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical civic-data story: young cartographers build a glowing population map from door visits, market counts, school rolls, and resident testimony, but discover that quiet streets and displaced neighborhoods are missing from the official survey. Different sampling methods reveal different gaps, and privacy-protected household symbols remain abstract. The team must improve coverage without turning individual lives into public data, producing a more representative and more honest civic map. Sophisticated social atmosphere, no readable charts, names, numbers, letters, or text."
+    },
+    {
+      "path": "manuscripts/advanced/22-the-experiment-that-wanted-to-be-right.md",
+      "title": "The Experiment That Wanted to Be Right",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical school science mystery: a team tests a new plant-growth treatment, secretly rearranges measurements to support the result they expect, and presents a dramatic graph to judges. A skeptical classmate introduces truly random assignment, equal comparisons, a sufficiently large sample, a visible measurement procedure, and independent replication, revealing both the original bias and a smaller real effect. The climax is an honest revised conclusion rather than a winner defeating others. Mature laboratory and field realism, no readable graphs, equations, labels, letters, or text."
+    },
+    {
+      "path": "manuscripts/advanced/23-the-river-with-two-witnesses.md",
+      "title": "The River with Two Witnesses",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical environmental investigation across a watershed: two young field scientists collect water samples upstream and downstream from farms, streets, storm drains, and restored wetlands, using the same jars, timing, controls, and living indicator organisms. Their instruments disagree, human observation adds context, and repeated measurements distinguish a real change from one dramatic sample. A community meeting must act under uncertainty without blaming a single visible culprit. Clear hydrology, scientific humility, mature stakes, no written data tables, labels, letters, or numbers."
+    },
+    {
+      "path": "manuscripts/advanced/24-the-archive-of-one-missing-day.md",
+      "title": "The Archive of One Missing Day",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical historical-archive mystery: teenage researchers discover that the same day is missing from a town's public newspaper, council ledger, family album, and official chronicle. A weather vane, damaged clockwork mechanism, private letters, oral histories, and materially different accounts each preserve partial truth, while a later official story is repeated until it feels certain. The team corroborates without pretending every source has equal reliability or erasing disagreement. Rich archive textures, intellectual tension, no readable documents, dates, letters, labels, or text."
+    }
+  ]
+}

@@ -5,15 +5,24 @@
 <section class="hero">
   <div class="hero-inner">
     <h1>Stories that teach kids to read.</h1>
-    <p>Read along as each word lights up — or become an author: generate a whole
-       illustrated picture book with AI, choosing your favourite story and image models.
-       Powered by your <a href="https://app.nz">app.nz</a> account &amp; credits.</p>
+    <p>Every word lights up as it is read, so kids follow along and learn. Then they
+       become authors: describe an idea and AI writes and illustrates a whole picture book.
+       Your first book is free.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg" href="/author">✨ Create a story</a>
-      <a class="btn btn-ghost btn-lg" href="#library">Browse the library</a>
+      <a class="btn btn-primary btn-lg" href="#library">Read a book free</a>
+      <a class="btn btn-ghost btn-lg" href="/pricing">Unlimited — $9/mo or $90/yr</a>
     </div>
   </div>
 </section>
+{{template "search" .}}
+<div id="browse"{{if .Q}} hidden{{end}}>
+{{if .Bands}}
+<nav class="bands" aria-label="Filter by reading time">
+  <span class="bands-label">Reading time</span>
+  {{range .Bands}}<a class="band{{if .Active}} band-on{{end}}" href="{{.Href}}">{{.Label}} <b>{{.Count}}</b></a>{{end}}
+</nav>
+{{end}}
+{{template "orderbar" .}}
 
 {{if .MyStories}}
 <section class="shelf" id="mine">
@@ -25,20 +34,12 @@
 {{end}}
 
 <section class="shelf" id="library">
-  <h2>Sample books</h2>
+  <h2>Library</h2>
   <div class="grid">
-    {{range .Samples}}{{template "card" .}}{{end}}
+    {{range .Library}}{{template "card" .}}{{end}}
   </div>
 </section>
-
-{{if .PublicStories}}
-<section class="shelf" id="community">
-  <h2>Made with AI by the community</h2>
-  <div class="grid">
-    {{range .PublicStories}}{{template "card" .}}{{end}}
-  </div>
-</section>
-{{end}}
+</div>
 
 {{template "footer"}}
 </body></html>
@@ -52,6 +53,7 @@
   <div class="card-meta">
     <span class="card-title">{{.Title}}</span>
     {{if .Author}}<span class="card-author">by {{.Author}}</span>{{end}}
+    {{if .Minutes}}<span class="card-time">{{.Minutes}} min read</span>{{end}}
   </div>
 </a>
 {{end}}

@@ -4,35 +4,30 @@
 
 <section class="hero">
   <div class="hero-inner">
-    <h1>Pricing &amp; credits</h1>
-    <p>Reading the library is free. Creating AI stories uses
-       <a href="https://app.nz">app.nz</a> credits.</p>
+    <h1>Reading Time Unlimited</h1>
+    <p>Read your first book free. Then one simple plan: every story, plus an AI author
+       and illustrator that never runs out of ideas.</p>
   </div>
 </section>
 
 <section class="shelf">
-  <h2>How it works</h2>
+  {{template "plans" .}}
+  {{if not .Enabled}}<p class="fine">Checkout is being set up — check back shortly.</p>{{end}}
+</section>
+
+<section class="shelf">
+  <h2>What you get</h2>
   <ul class="pricing-list">
-    <li><strong>Reading is free.</strong> Sample books, the <a href="/stories">story gallery</a>
-        and any story shared with you cost nothing to read.</li>
-    <li><strong>Generating uses credits.</strong> Writing a story and illustrating its pages
-        are metered against your app.nz credit balance — the same credits used across the
-        app.nz network.</li>
-    <li><strong>Free credits on signup.</strong> A free app.nz account includes free credits,
-        enough to create your first stories.</li>
-    <li><strong>Top up anytime.</strong> Buy more credits from your
-        <a href="{{.Cfg.AccountURL}}">app.nz account page</a>.</li>
+    <li><strong>1 book free.</strong> Open any book or story, no card needed. Sign in and subscribe to keep going.</li>
+    <li><strong>Every story, word by word.</strong> Each word lights up as it's read, so kids follow along and learn to read.</li>
+    <li><strong>Unlimited AI writing.</strong> Describe an idea and DeepSeek V4 Flash writes a complete picture book, then helps you rewrite, simplify, rhyme and extend every page.</li>
+    <li><strong>AI illustrations.</strong> Every page painted by our RA2 art engine in a consistent style.</li>
+    <li><strong>Publish to the gallery.</strong> Share your book with a link or list it for every family to read.</li>
+    <li><strong>Fair use.</strong> Generous daily limits (80 writing and 400 illustration requests) keep it fast for everyone.</li>
   </ul>
-  <div class="hero-cta">
-    {{if .User}}
-    <a class="btn btn-primary btn-lg" href="/author">✨ Start creating</a>
-    <a class="btn btn-ghost btn-lg" href="{{.Cfg.AccountURL}}">Manage credits</a>
-    {{else}}
-    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in free — includes credits</a>
-    <a class="btn btn-ghost btn-lg" href="/author">Try the story studio</a>
-    {{end}}
-  </div>
+  {{if .User}}{{if .User.Sub}}<p class="fine">You are on Unlimited. <a href="/author">Open the studio</a>.</p>{{end}}{{end}}
 </section>
 
 {{template "footer"}}
+<script src="/static/js/billing.js"></script>
 </body></html>

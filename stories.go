@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"regexp"
@@ -13,31 +12,53 @@ import (
 // Story is a user-authored, AI-generated reading book. Pages mirror Book pages
 // so the same reveal.js word-highlight reader renders them.
 type Story struct {
-	ID         string    `json:"id"`
-	UserID     string    `json:"user_id"`
-	AuthorName string    `json:"author_name"`
-	Title      string    `json:"title"`
-	Prompt     string    `json:"prompt"`
-	CoverURL   string    `json:"cover_url"`
-	TextModel  string    `json:"text_model"`
-	ImageModel string    `json:"image_model"`
-	Public     bool      `json:"public"`
-	Pages      []Page    `json:"pages"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID             string    `json:"id"`
+	UserID         string    `json:"user_id"`
+	AuthorName     string    `json:"author_name"`
+	Title          string    `json:"title"`
+	Prompt         string    `json:"prompt"`
+	CoverURL       string    `json:"cover_url"`
+	TextModel      string    `json:"text_model"`
+	ImageModel     string    `json:"image_model"`
+	Public         bool      `json:"public"`
+	Pages          []Page    `json:"pages"`
+	WordCount      int       `json:"word_count"`
+	ReadingMinutes int       `json:"reading_minutes"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// wordsPerMinute is the reading rate the reading-time badge is derived from.
+// 140 wpm is a slow independent-reader pace: the app's whole point is helping
+// children read along, so a teen/adult rate would understate every estimate.
+const wordsPerMinute = 140
+
+// measuringWord matches one countable word: a run of word characters, allowing
+// apostrophes and hyphens inside a word. Mirrors publish_manuscripts.py's
+// WORD_RE so a published manuscript reports the same count in Go.
+var measuringWord = regexp.MustCompile(`\b[\w’'-]+\b`)
+
+// measure counts the words in a story and converts that to whole reading
+// minutes, rounded up so a story never claims to take zero minutes.
+func measure(pages []Page) (words, minutes int) {
+	for _, p := range pages {
+		words += len(measuringWord.FindAllString(p.Text, -1))
+	}
+	return words, (words + wordsPerMinute - 1) / wordsPerMinute
+}
+
+// readingMinutes is the whole-minute reading estimate for a page list. Sample
+// books are not stored, so they are measured on the fly.
+func readingMinutes(pages []Page) int {
+	_, minutes := measure(pages)
+	return minutes
 }
 
 type storyStore struct {
-	db *sql.DB
+	db *pgDB
 }
 
-func newStoryStore(path string) (*storyStore, error) {
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=5000")
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(8)
-	db.SetMaxIdleConns(8)
+func newStoryStore(db *pgDB) (*storyStore, error) {
 	if _, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS stories (
 			id           TEXT PRIMARY KEY,
@@ -50,8 +71,10 @@ func newStoryStore(path string) (*storyStore, error) {
 			image_model  TEXT NOT NULL DEFAULT '',
 			public       INTEGER NOT NULL DEFAULT 0,
 			pages_json   TEXT NOT NULL,
-			created_at   TIMESTAMP NOT NULL,
-			updated_at   TIMESTAMP NOT NULL
+			word_count   INTEGER NOT NULL DEFAULT 0,
+			reading_minutes INTEGER NOT NULL DEFAULT 0,
+			created_at   TIMESTAMPTZ NOT NULL,
+			updated_at   TIMESTAMPTZ NOT NULL
 		);
 		CREATE INDEX IF NOT EXISTS idx_stories_user ON stories(user_id, updated_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_stories_public ON stories(public, updated_at DESC);
@@ -60,6 +83,11 @@ func newStoryStore(path string) (*storyStore, error) {
 	}
 	return &storyStore{db: db}, nil
 }
+
+// storyColumns is the single column list every story query selects and scans,
+// so the projection can never drift out of step with scanStory.
+const storyColumns = `id, user_id, author_name, title, prompt, cover_url, text_model,
+	image_model, public, pages_json, word_count, reading_minutes, created_at, updated_at`
 
 func (s *storyStore) save(st *Story) error {
 	pages, err := json.Marshal(st.Pages)
@@ -75,34 +103,34 @@ func (s *storyStore) save(st *Story) error {
 	if st.Public {
 		pub = 1
 	}
+	st.WordCount, st.ReadingMinutes = measure(st.Pages)
 	_, err = s.db.Exec(`
-		INSERT INTO stories (id, user_id, author_name, title, prompt, cover_url, text_model, image_model, public, pages_json, created_at, updated_at)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+		INSERT INTO stories (`+storyColumns+`)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		ON CONFLICT(id) DO UPDATE SET
 			author_name=excluded.author_name, title=excluded.title, prompt=excluded.prompt,
 			cover_url=excluded.cover_url, text_model=excluded.text_model, image_model=excluded.image_model,
-			public=excluded.public, pages_json=excluded.pages_json, updated_at=excluded.updated_at`,
+			public=excluded.public, pages_json=excluded.pages_json,
+			word_count=excluded.word_count, reading_minutes=excluded.reading_minutes,
+			updated_at=excluded.updated_at`,
 		st.ID, st.UserID, st.AuthorName, st.Title, st.Prompt, st.CoverURL, st.TextModel, st.ImageModel,
-		pub, string(pages), st.CreatedAt, st.UpdatedAt)
+		pub, string(pages), st.WordCount, st.ReadingMinutes, st.CreatedAt, st.UpdatedAt)
 	return err
 }
 
 func (s *storyStore) get(id string) (*Story, error) {
-	row := s.db.QueryRow(`
-		SELECT id, user_id, author_name, title, prompt, cover_url, text_model, image_model, public, pages_json, created_at, updated_at
+	row := s.db.QueryRow(`SELECT `+storyColumns+`
 		FROM stories WHERE id = ?`, id)
 	return scanStory(row)
 }
 
 func (s *storyStore) listByUser(userID string, limit int) ([]*Story, error) {
-	return s.query(`
-		SELECT id, user_id, author_name, title, prompt, cover_url, text_model, image_model, public, pages_json, created_at, updated_at
+	return s.query(`SELECT `+storyColumns+`
 		FROM stories WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?`, userID, limit)
 }
 
 func (s *storyStore) listPublic(limit int) ([]*Story, error) {
-	return s.query(`
-		SELECT id, user_id, author_name, title, prompt, cover_url, text_model, image_model, public, pages_json, created_at, updated_at
+	return s.query(`SELECT `+storyColumns+`
 		FROM stories WHERE public = 1 ORDER BY updated_at DESC LIMIT ?`, limit)
 }
 
@@ -137,19 +165,25 @@ func scanStory(row scanner) (*Story, error) {
 	var pub int
 	var pagesJSON string
 	if err := row.Scan(&st.ID, &st.UserID, &st.AuthorName, &st.Title, &st.Prompt, &st.CoverURL,
-		&st.TextModel, &st.ImageModel, &pub, &pagesJSON, &st.CreatedAt, &st.UpdatedAt); err != nil {
+		&st.TextModel, &st.ImageModel, &pub, &pagesJSON, &st.WordCount, &st.ReadingMinutes,
+		&st.CreatedAt, &st.UpdatedAt); err != nil {
 		return nil, err
 	}
 	st.Public = pub != 0
 	if pagesJSON != "" {
 		_ = json.Unmarshal([]byte(pagesJSON), &st.Pages)
 	}
+	// Rows written before the reading-time columns existed carry zeroes; derive
+	// the estimate on read so the badge is never blank without a backfill.
+	if st.ReadingMinutes == 0 {
+		st.WordCount, st.ReadingMinutes = measure(st.Pages)
+	}
 	return &st, nil
 }
 
 // --- shared helpers ---
 
-// wordSplit mirrors the original fixtures.py regex: it splits text into
+// wordSplit mirrors the original Python reader's regex: it splits text into
 // alternating word / separator tokens (the separator — whitespace plus any
 // surrounding punctuation — is kept so the reader can render and skip it). The
 // reader treats a token whose first rune is whitespace/punctuation as a

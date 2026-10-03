@@ -1,0 +1,16 @@
+{{template "head" .Meta}}
+<body class="page-home">
+{{template "header" .}}
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Enjoyed “{{.Title}}”?</h1>
+    <p>Your free book is done. Sign in and go Unlimited to keep reading every story — and write and illustrate your own.</p>
+  </div>
+</section>
+<section class="shelf">
+  {{template "plans" .}}
+  <p class="fine">Prefer to just look around? <a href="/pricing">See what's included</a>.</p>
+</section>
+{{template "footer"}}
+<script src="/static/js/billing.js"></script>
+</body></html>

@@ -67,19 +67,49 @@ DEFAULT_OUTPUT = ROOT / "static" / "manuscript-pages"
 DEFAULT_WORLDS = ROOT / "manuscripts" / "worlds"
 DEFAULT_COVERS = ROOT / "manuscripts" / "art"
 DEFAULT_SHEETS = ROOT / "manuscripts" / "contact-sheets"
-STYLE_BY_LEVEL = {
-    "accessible": (
-        "warm children's storybook illustration, rounded readable forms, luminous color, gentle wonder",
-        "character-forward, safe and inviting, with no horror",
-    ),
-    "intermediate": (
-        "painterly fantasy adventure illustration, expressive textures, clear silhouettes, rich environmental detail",
-        "youthful protagonists and an emotionally clear heroic moment",
-    ),
-    "advanced": (
-        "sophisticated painterly fantasy illustration, cinematic composition, tactile detail, restrained dramatic light",
-        "adult protagonists, nuanced body language, grounded and non-glorifying",
-    ),
+MEDIUM_BY_STYLE = {
+    "painterly": {
+        "accessible": (
+            "warm children's storybook illustration, rounded readable forms, luminous color, gentle wonder",
+            "character-forward, safe and inviting, with no horror",
+        ),
+        "intermediate": (
+            "painterly fantasy adventure illustration, expressive textures, clear silhouettes, rich environmental detail",
+            "youthful protagonists and an emotionally clear heroic moment",
+        ),
+        "advanced": (
+            "sophisticated painterly fantasy illustration, cinematic composition, tactile detail, restrained dramatic light",
+            "adult protagonists, nuanced body language, grounded and non-glorifying",
+        ),
+    },
+    "anime": {
+        "accessible": (
+            "modern Japanese anime key visual, clean confident linework, flat cel shading, soft hand-painted background, expressive face",
+            "character-forward, safe and inviting, with no horror",
+        ),
+        "intermediate": (
+            "cinematic anime film still, precise linework, even cel shading, hand-painted background art",
+            "youthful protagonists and an emotionally clear heroic moment",
+        ),
+        "advanced": (
+            "moody anime film still, fine linework, cinematic cel shading, hand-painted dusk and night background",
+            "adult protagonists, nuanced body language, grounded and non-glorifying",
+        ),
+    },
+    "comic": {
+        "accessible": (
+            "bold inked illustration, thick black outlines, flat blocks of saturated colour, halftone dot shading in the shadows, expressive cartoon face",
+            "character-forward, safe and inviting, with no horror",
+        ),
+        "intermediate": (
+            "bold inked illustration, thick black outlines, flat blocks of colour, hard shadow shapes, halftone dot shading, dramatic foreshortening",
+            "youthful protagonists and an emotionally clear heroic moment",
+        ),
+        "advanced": (
+            "adult inked illustration, heavy black outlines, moody blocks of flat colour, screentone shading, noir lighting",
+            "adult protagonists, nuanced body language, grounded and non-glorifying",
+        ),
+    },
 }
 # Only these are worth a second attempt: a dropped or timed-out connection, or a
 # lane that is momentarily out of memory. Anything else is a bug and stops the run.
@@ -238,7 +268,8 @@ def visual_style(worlds: Path) -> dict[str, str]:
 NO_TEXT_CLAUSE = "no written words, letters, numbers, captions, logos, borders, or watermark"
 
 
-def compose_prompt(scene: str, style: str, level: str, index: int, total: int) -> str:
+def compose_prompt(scene: str, style: str, level: str, index: int, total: int,
+                   style_preset: str = "painterly") -> str:
     """The scene's own words, then the world's palette, then the no-lettering clause.
 
     The style and framing sentences are the same ones the cover generator appends,
@@ -246,7 +277,7 @@ def compose_prompt(scene: str, style: str, level: str, index: int, total: int) -
     already ends with the no-lettering clause, so it is stripped first and added
     once, here.
     """
-    medium, framing = STYLE_BY_LEVEL[level]
+    medium, framing = MEDIUM_BY_STYLE[style_preset][level]
     position = (
         "the frontispiece"
         if index == 1
@@ -312,8 +343,15 @@ def cover_seed(key: str) -> int:
     return int.from_bytes(hashlib.sha256(key.encode()).digest()[:8], "big") % (2**63 - 1)
 
 
-def seed_for(key: str, index: int) -> int:
-    return int.from_bytes(hashlib.sha256(f"{key}:{index}".encode()).digest()[:8], "big") % (2**63 - 1)
+def seed_for(key: str, index: int, salt: int = 0) -> int:
+    """Deterministic per (story, page), with an optional salt.
+
+    A handful of seeds degenerate into pure noise or a flat smear on this model
+    whatever the prompt says, so a page that came back broken cannot be
+    re-rolled by rewriting its prompt. `--seed-salt` is how you re-roll it.
+    """
+    material = f"{key}:{index}" if not salt else f"{key}:{index}:{salt}"
+    return int.from_bytes(hashlib.sha256(material.encode()).digest()[:8], "big") % (2**63 - 1)
 
 
 @dataclass
@@ -344,11 +382,13 @@ def load_stories(args: argparse.Namespace) -> list[Story]:
     ]
 
 
-def compose_for(story: Story, prompts: dict, styles: dict, worlds: Path, index: int) -> str:
+def compose_for(story: Story, prompts: dict, styles: dict, worlds: Path, index: int,
+                style_preset: str = "painterly") -> str:
     world, scenes = prompts[story.key]
     check_world(world, worlds)
     scene = scenes[index - 1]
-    prompt = compose_prompt(scene, styles.get(world, ""), story.level, index, len(story.pages))
+    prompt = compose_prompt(scene, styles.get(world, ""), story.level, index, len(story.pages),
+                            style_preset)
     if names_single_child(scene):
         prompt = f"{prompt}; {SOLO_CLAUSE}"
     return prompt
@@ -430,11 +470,37 @@ def render(call: Callable[[], Any], label: str, retries: int) -> tuple[Any, floa
     return None
 
 
+class PlaceholderConnection:
+    """psycopg2 spells the placeholder %s where SQLite spells it ?, and exposes
+    execute on a cursor rather than on the connection.
+
+    Everything else this script does with the connection - execute, fetchone,
+    commit, close - is the same shape on both, so the adapter is the whole of it.
+    """
+
+    def __init__(self, connection):
+        self._connection = connection
+        self._cursor = connection.cursor()
+
+    def execute(self, sql, params=()):
+        self._cursor.execute(sql.replace("?", "%s"), params)
+        return self._cursor
+
+    def commit(self):
+        self._connection.commit()
+
+    def close(self):
+        self._cursor.close()
+        self._connection.close()
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--fragments", type=Path, default=DEFAULT_FRAGMENTS)
-    parser.add_argument("--db", type=Path, default=DEFAULT_DB)
+    parser.add_argument("--db", type=Path, default=None,
+                        help="write page images back to this SQLite file instead of Postgres")
+    parser.add_argument("--database-url", default="",
+                        help="write back to Postgres; defaults to DATABASE_URL from the env or .env")
     parser.add_argument("--no-db", action="store_true", help="write image files only")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--covers-output", type=Path, default=DEFAULT_COVERS)
@@ -457,6 +523,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--request-timeout", type=int, default=300)
     parser.add_argument("--retries", type=int, default=8)
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--seed-salt", type=int, default=0,
+                        help="re-roll the deterministic seed; use to replace a page that came back broken")
+    parser.add_argument("--style", choices=sorted(MEDIUM_BY_STYLE), default="painterly",
+                        help="medium register appended to each page prompt")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
@@ -501,8 +571,16 @@ def main(argv: list[str] | None = None) -> int:
 
     connection = None
     if not args.no_db:
-        connection = sqlite3.connect(args.db, timeout=30)
-        connection.execute("PRAGMA busy_timeout = 30000")
+        dsn = "" if args.db is not None else pm.postgres_url(args.database_url)
+        if dsn:
+            # The running app reads Postgres, so the page images have to be
+            # written back there; readingtime.db is the legacy SQLite file.
+            import psycopg2
+
+            connection = PlaceholderConnection(psycopg2.connect(dsn))
+        else:
+            connection = sqlite3.connect(args.db or DEFAULT_DB, timeout=30)
+            connection.execute("PRAGMA busy_timeout = 30000")
     made = skipped = failed = 0
     busy = 0.0
     started = time.time()
@@ -530,7 +608,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.with_covers and story.item is not None:
                 target = args.covers_output / story.level / f"{story.stem}.webp"
                 if args.force or not target.exists():
-                    prompt = f"{story.item['prompt']}. {covers.art_direction(story.item)}"
+                    prompt = f"{story.item['prompt']}. {covers.art_direction(story.item, args.style)}"
                     result = render(
                         lambda: covers.request_cover(args.base, model, prompt, cover_seed(story.key),
                                                      args.cover_size, secret, args.request_timeout),
@@ -571,9 +649,9 @@ def main(argv: list[str] | None = None) -> int:
                     data: bytes | None = target.read_bytes()
                     seconds = 0.0
                 else:
-                    prompt = compose_for(story, prompts, styles, args.worlds, index)
+                    prompt = compose_for(story, prompts, styles, args.worlds, index, args.style)
                     result = render(
-                        lambda: request_page(args.base, model, prompt, seed_for(story.key, index),
+                        lambda: request_page(args.base, model, prompt, seed_for(story.key, index, args.seed_salt),
                                              args.size, secret, args.request_timeout),
                         f"{story.title} page {index}", args.retries)
                     if result is None:

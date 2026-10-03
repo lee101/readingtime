@@ -10,17 +10,18 @@ import (
 // tokens (words interleaved with their trailing whitespace/punctuation, exactly
 // like the original app so the word-by-word highlight reader works unchanged).
 type Page struct {
-	Text      string   `json:"text"`
-	Words     []string `json:"words"`
-	ImagePath string   `json:"imagePath,omitempty"` // sample books: /static/bookdata/<book>/<imagePath>
-	ImageURL  string   `json:"image_url,omitempty"` // AI stories: absolute/generated URL
-	Layout    string   `json:"layout,omitempty"`
-	DarkColor bool     `json:"dark_color,omitempty"`
-	CSS       string   `json:"css,omitempty"`
+	Text        string   `json:"text"`
+	Words       []string `json:"words"`
+	ImagePath   string   `json:"imagePath,omitempty"` // sample books: /static/bookdata/<book>/<imagePath>
+	ImageURL    string   `json:"image_url,omitempty"` // AI stories: absolute/generated URL
+	ImagePrompt string   `json:"image_prompt,omitempty"`
+	Layout      string   `json:"layout,omitempty"`
+	DarkColor   bool     `json:"dark_color,omitempty"`
+	CSS         string   `json:"css,omitempty"`
 }
 
 // Book is a curated sample reader (loaded from books.json, converted from the
-// original fixtures.py). User-authored AI stories live in the stories table.
+// original Python fixtures). User-authored AI stories live in the stories table.
 type Book struct {
 	Name          string `json:"name"`
 	Title         string `json:"title,omitempty"`

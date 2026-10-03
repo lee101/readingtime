@@ -3,6 +3,10 @@ package main
 import (
 	"bytes"
 	"html/template"
+	"log"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/valyala/fasthttp"
@@ -17,13 +21,45 @@ func loadTemplates() (*template.Template, error) {
 func (s *Server) render(ctx *fasthttp.RequestCtx, name string, data any) {
 	var buf bytes.Buffer
 	if err := s.tmpl.ExecuteTemplate(&buf, name, data); err != nil {
+		log.Printf("template %s: %v", name, err)
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		ctx.SetContentType("text/plain; charset=utf-8")
-		ctx.WriteString("template error: " + err.Error())
+		ctx.WriteString("template error")
 		return
 	}
 	ctx.SetContentType("text/html; charset=utf-8")
-	ctx.Write(buf.Bytes())
+	ctx.Response.Header.Set("Cache-Control", "private, no-cache")
+	ctx.Write(s.cdnRewrite(buf.Bytes()))
+}
+
+var staticAttr = regexp.MustCompile(`(src|href)="/static/([^"]*)"`)
+
+var buildVersion = func() string {
+	if exe, err := os.Executable(); err == nil {
+		if fi, err := os.Stat(exe); err == nil {
+			return strconv.FormatInt(fi.ModTime().Unix(), 36)
+		}
+	}
+	return "0"
+}()
+
+// cdnRewrite points /static/ asset URLs at the CDN bucket (when configured) and
+// adds a build-version query so a deploy never serves stale assets. Server-written
+// uploads under /static/generated stay on the origin.
+func (s *Server) cdnRewrite(b []byte) []byte {
+	return staticAttr.ReplaceAllFunc(b, func(m []byte) []byte {
+		sub := staticAttr.FindSubmatch(m)
+		path := string(sub[2])
+		base := s.cfg.StaticBase
+		if strings.HasPrefix(path, "generated/") {
+			base = ""
+		}
+		q := ""
+		if !strings.Contains(path, "?") && (strings.HasSuffix(path, ".css") || strings.HasSuffix(path, ".js")) {
+			q = "?v=" + buildVersion
+		}
+		return []byte(string(sub[1]) + `="` + base + "/static/" + path + q + `"`)
+	})
 }
 
 // --- view models ---
@@ -52,6 +88,7 @@ type ReaderView struct {
 	Cfg       Config
 	LoginURL  string
 	BackHref  string
+	Minutes   int
 }
 
 const separatorRunes = " \n\t-,.;:'!?\"<…”“"

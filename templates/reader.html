@@ -22,6 +22,8 @@
 <div class="reader-topbar">
   <a class="reader-back" href="{{.BackHref}}">← Library</a>
   <span class="reader-title">{{.Title}}</span>
+  <span class="reader-narrate"><button id="narrate-btn" class="btn btn-sm btn-primary" type="button">Listen</button><label class="reader-auto"><input type="checkbox" id="narrate-auto" checked> Auto</label></span>
+  {{if .Minutes}}<span class="reader-time">{{.Minutes}} min read</span>{{end}}
   {{if .User}}<span class="reader-user">{{.User.DisplayName}}</span>
   {{else}}<a class="reader-back" href="{{.LoginURL}}">Sign in</a>{{end}}
 </div>
@@ -29,11 +31,6 @@
 <div class="rt-body">
   <div class="reveal">
     <div class="slides">
-      {{if .AudioLink}}
-      <audio id="audioLink" preload="auto" autoplay>
-        <source src="{{.AudioLink}}" type="audio/mpeg">
-      </audio>
-      {{end}}
       {{range .Pages}}
       {{$col := eq .Layout "column"}}
       <section>
@@ -45,4 +42,8 @@
     </div>
   </div>
 </div>
+<script>
+(function(){var m=location.pathname.match(/^\/(book|story)\/([^\/]+)/);if(m){window.rtNarrate={};window.rtNarrate[m[1]]=decodeURIComponent(m[2]);}})();
+</script>
+<script src="/static/js/narrate.js"></script>
 </body></html>

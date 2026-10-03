@@ -1,35 +1,30 @@
 package main
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"errors"
+	"net/mail"
 	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Cookie names match app.nz (app-site/server/main.go). The shared cookie is set
-// on the `.app.nz` domain so it is sent to readingtime.app.nz automatically —
-// that is what makes login seamless: if you are signed in on app.nz you are
-// signed in here, no extra round-trip.
-const (
-	sessionCookie       = "__Host-appnz_sso_session"
-	sharedSessionCookie = "appnz_session"
-)
+const sessionCookie = "rt_session"
 
-// User is the subset of the shared app.nz users row we need.
+const sessionTTL = 90 * 24 * time.Hour
+
 type User struct {
-	ID         string `json:"id"`
-	Email      string `json:"email"`
-	Handle     string `json:"handle"`
-	FreeCredit int    `json:"free_credits"`
-	PaidCredit int    `json:"paid_credits"`
-	IsAdmin    bool   `json:"is_admin"`
+	ID      string `json:"id"`
+	Email   string `json:"email"`
+	Handle  string `json:"handle"`
+	IsAdmin bool   `json:"is_admin"`
+	Sub     bool   `json:"subscriber"`
 }
-
-func (u *User) Credits() int { return u.FreeCredit + u.PaidCredit }
 
 func (u *User) DisplayName() string {
 	if u == nil {
@@ -44,48 +39,121 @@ func (u *User) DisplayName() string {
 	return u.Email
 }
 
-// authStore reads the shared app.nz SSO/billing DB (read-only path of trust).
 type authStore struct {
-	db *sql.DB
+	db *pgDB
 }
 
-func newAuthStore(path string) (*authStore, error) {
-	path = strings.TrimSpace(path)
-	if path == "" {
-		return nil, nil
-	}
-	// Read-only-ish: we only SELECT here. Open with WAL + busy timeout to play
-	// nicely with the app.nz writer process sharing this file.
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=5000&mode=ro")
-	if err != nil {
+func newAuthStore(db *pgDB) (*authStore, error) {
+	if _, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS accounts (
+			id            TEXT PRIMARY KEY,
+			email         TEXT NOT NULL,
+			password_hash TEXT NOT NULL,
+			handle        TEXT NOT NULL DEFAULT '',
+			is_admin      BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+			disabled_at   TIMESTAMPTZ
+		);
+		CREATE UNIQUE INDEX IF NOT EXISTS accounts_email_idx ON accounts (lower(email));
+		CREATE TABLE IF NOT EXISTS sessions (
+			id         TEXT PRIMARY KEY,
+			user_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+			expires_at TIMESTAMPTZ NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions (user_id);
+	`); err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(4)
-	db.SetMaxIdleConns(4)
 	return &authStore{db: db}, nil
 }
 
-// hashToken matches app.nz: sha256 -> base64 RawURLEncoding. The cookie carries
-// the raw token; the DB stores its hash.
 func hashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
-// sessionToken returns the raw session token from the request cookies (and which
-// cookie carried it). The raw token is what we forward to the AI gateway so it
-// authenticates the same user and bills their credits.
-func sessionToken(ctx *fasthttp.RequestCtx) string {
-	for _, name := range []string{sessionCookie, sharedSessionCookie} {
-		if tok := strings.TrimSpace(string(ctx.Request.Header.Cookie(name))); tok != "" {
-			return tok
-		}
-	}
-	return ""
+func newToken() string {
+	b := make([]byte, 32)
+	_, _ = rand.Read(b)
+	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-// userFromRequest validates the app.nz session cookie against sso_sessions and
-// returns the user (or nil if not signed in / expired).
+var (
+	errEmailTaken = errors.New("an account with that email already exists")
+	errBadLogin   = errors.New("wrong email or password")
+)
+
+func normEmail(e string) (string, error) {
+	e = strings.TrimSpace(e)
+	a, err := mail.ParseAddress(e)
+	if err != nil || a.Address != e || len(e) > 254 {
+		return "", errors.New("enter a valid email address")
+	}
+	return strings.ToLower(e), nil
+}
+
+func (a *authStore) signup(email, password, handle string) (*User, error) {
+	email, err := normEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	if len(password) < 8 || len(password) > 72 {
+		return nil, errors.New("password must be 8 to 72 characters")
+	}
+	handle = strings.TrimSpace(handle)
+	if len(handle) > 40 {
+		handle = handle[:40]
+	}
+	h, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	u := &User{ID: genID(), Email: email, Handle: handle}
+	res, err := a.db.Exec(`INSERT INTO accounts (id, email, password_hash, handle) VALUES (?,?,?,?)
+		ON CONFLICT DO NOTHING`, u.ID, u.Email, string(h), u.Handle)
+	if err != nil {
+		return nil, err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return nil, errEmailTaken
+	}
+	return u, nil
+}
+
+func (a *authStore) login(email, password string) (*User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	var u User
+	var hash string
+	err := a.db.QueryRow(`SELECT id, email, handle, is_admin, password_hash FROM accounts
+		WHERE lower(email) = ? AND disabled_at IS NULL`, email).Scan(&u.ID, &u.Email, &u.Handle, &u.IsAdmin, &hash)
+	if err != nil {
+		bcrypt.CompareHashAndPassword([]byte("$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5BUe1LzW8cD2YbU5Z1m1bZ3Qh7Xqa"), []byte(password))
+		return nil, errBadLogin
+	}
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
+		return nil, errBadLogin
+	}
+	return &u, nil
+}
+
+func (a *authStore) createSession(userID string) (string, time.Time, error) {
+	tok := newToken()
+	exp := time.Now().Add(sessionTTL)
+	_, err := a.db.Exec(`INSERT INTO sessions (id, user_id, expires_at) VALUES (?,?,?)`, hashToken(tok), userID, exp.UTC())
+	return tok, exp, err
+}
+
+func (a *authStore) deleteSession(tok string) {
+	if tok != "" {
+		_, _ = a.db.Exec(`DELETE FROM sessions WHERE id = ?`, hashToken(tok))
+	}
+}
+
+func sessionToken(ctx *fasthttp.RequestCtx) string {
+	return strings.TrimSpace(string(ctx.Request.Header.Cookie(sessionCookie)))
+}
+
 func (a *authStore) userFromRequest(ctx *fasthttp.RequestCtx) *User {
 	if a == nil {
 		return nil
@@ -94,31 +162,16 @@ func (a *authStore) userFromRequest(ctx *fasthttp.RequestCtx) *User {
 	if tok == "" {
 		return nil
 	}
-	var userID string
-	var expiresAt time.Time
-	err := a.db.QueryRow("SELECT user_id, expires_at FROM sso_sessions WHERE id = ?", hashToken(tok)).
-		Scan(&userID, &expiresAt)
-	if err != nil {
-		return nil
-	}
-	if time.Now().After(expiresAt) {
-		return nil
-	}
-	return a.userByID(userID)
-}
-
-func (a *authStore) userByID(id string) *User {
 	var u User
-	var handle sql.NullString
-	var admin int
-	err := a.db.QueryRow(
-		`SELECT id, email, COALESCE(handle,''), COALESCE(free_credits,0), COALESCE(paid_credits,0), COALESCE(is_admin,0)
-		 FROM users WHERE id = ? AND disabled_at IS NULL`, id).
-		Scan(&u.ID, &u.Email, &handle, &u.FreeCredit, &u.PaidCredit, &admin)
+	err := a.db.QueryRow(`SELECT a.id, a.email, a.handle, a.is_admin FROM sessions s
+		JOIN accounts a ON a.id = s.user_id
+		WHERE s.id = ? AND s.expires_at > now() AND a.disabled_at IS NULL`, hashToken(tok)).
+		Scan(&u.ID, &u.Email, &u.Handle, &u.IsAdmin)
 	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
 		return nil
 	}
-	u.Handle = handle.String
-	u.IsAdmin = admin != 0
 	return &u
 }

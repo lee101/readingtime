@@ -104,14 +104,17 @@ var readingtime = new (function ($) {
             var index = event.indexh;
             $('.slides .present .reading-word').first().focus();
         });
-        $.getJSON(subs_link, function (subs) {
-            self.subs = subs
-            bookAudio.pageEndTime = bookAudio.getPageEndTime(0);
-        })
+        if (typeof subs_link !== 'undefined' && subs_link) {
+            $.getJSON(subs_link, function (subs) {
+                self.subs = subs
+                bookAudio.pageEndTime = bookAudio.getPageEndTime(0);
+            })
+        }
     });
 
 
     self.playAudioAt = function (wordIdx) {
+        if (!self.subs.words || !bookAudio.audio) return;
         let wordSub = self.subs.words[wordIdx];
         let currentTime = bookAudio.currentTime();
         var aboutToSayWord = !bookAudio.isPlaying() && currentTime < wordSub['start'] && currentTime > wordSub['start'] - 2;
@@ -123,6 +126,7 @@ var readingtime = new (function ($) {
     self.wordFocus = function (pageIdx, wordIdx) {
         Reveal.slide(pageIdx);
         // if it was a user interaction set audio playtime to before this wordIdx
+        if (!self.subs.words) return;
         let pageEndTime = bookAudio.getPageEndTime(wordIdx);
         if (pageEndTime !== 0) {
             bookAudio.pageEndTime = pageEndTime;
@@ -213,9 +217,8 @@ var bookAudio = new (function () {
     };
 
     $(document).ready(function () {
-        self.audio = document.getElementById('audioLink'); // todo
-
-        self.audio.addEventListener('timeupdate', self.playlistener);
+        self.audio = document.getElementById('audioLink');
+        if (self.audio) self.audio.addEventListener('timeupdate', self.playlistener);
     })
 
     return self;

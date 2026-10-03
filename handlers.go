@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -16,7 +19,11 @@ func (s *Server) user(ctx *fasthttp.RequestCtx) *User {
 	if s.auth == nil {
 		return nil
 	}
-	return s.auth.userFromRequest(ctx)
+	u := s.auth.userFromRequest(ctx)
+	if u != nil {
+		u.Sub = s.billing.subscriber(u)
+	}
+	return u
 }
 
 func writeJSON(ctx *fasthttp.RequestCtx, status int, v any) {
@@ -29,20 +36,11 @@ func apiError(ctx *fasthttp.RequestCtx, status int, msg string) {
 	writeJSON(ctx, status, map[string]any{"error": msg})
 }
 
-// loginURL returns the app.nz login URL that returns the user back here.
 func (s *Server) loginURL(returnTo string) string {
-	if returnTo == "" {
-		returnTo = s.cfg.SiteBaseURL + "/"
-	}
-	sep := "?"
-	if strings.Contains(s.cfg.LoginURL, "?") {
-		sep = "&"
-	}
-	// app.nz's login page reads `next` to return the user after sign-in.
-	return s.cfg.LoginURL + sep + "next=" + url(returnTo)
+	return "/login?next=" + qesc(strings.TrimPrefix(returnTo, s.cfg.SiteBaseURL))
 }
 
-func url(s string) string {
+func qesc(s string) string {
 	r := strings.NewReplacer(":", "%3A", "/", "%2F", "?", "%3F", "&", "%26", "=", "%3D", " ", "%20")
 	return r.Replace(s)
 }
@@ -64,71 +62,205 @@ func (s *Server) returnTo(next string) string {
 	}
 }
 
-// handleLogin is readingtime's first-party entry point to app.nz SSO. Visiting
-// /login (or /login?next=/author) bounces to the shared app.nz sign-in, which
-// sets the `.app.nz` session cookie and returns the user here already signed in.
-func (s *Server) handleLogin(ctx *fasthttp.RequestCtx) {
-	// Already signed in? Skip the round-trip.
-	if s.user(ctx) != nil {
-		ctx.Redirect(s.returnTo(string(ctx.QueryArgs().Peek("next"))), fasthttp.StatusFound)
-		return
-	}
-	dest := s.loginURL(s.returnTo(string(ctx.QueryArgs().Peek("next"))))
-	ctx.Redirect(dest, fasthttp.StatusFound)
-}
-
-// handleLogout signs the user out network-wide: it asks app.nz to delete the
-// server-side session, then expires the shared `.app.nz` cookie in the browser
-// so readingtime (and every other app.nz subdomain) sees them as signed out.
-// GET redirects home (nav link); POST returns JSON (fetch).
-func (s *Server) handleLogout(ctx *fasthttp.RequestCtx) {
-	if tok := sessionToken(ctx); tok != "" {
-		if err := s.gw.logout(tok); err != nil && s.cfg.Debug {
-			// Non-fatal: we still clear the cookie below.
-			ctx.Logger().Printf("logout proxy failed: %v", err)
-		}
-	}
-	s.expireSharedCookie(ctx)
-	if string(ctx.Method()) == "POST" {
-		writeJSON(ctx, 200, map[string]any{"ok": true})
-		return
-	}
-	ctx.Redirect(s.returnTo(string(ctx.QueryArgs().Peek("next"))), fasthttp.StatusFound)
-}
-
-// expireSharedCookie clears the `.app.nz`-scoped session cookie. readingtime is
-// a subdomain of the cookie's domain, so it is allowed to expire it; this is
-// what makes the local sign-out take effect immediately.
-func (s *Server) expireSharedCookie(ctx *fasthttp.RequestCtx) {
-	c := fasthttp.AcquireCookie()
-	defer fasthttp.ReleaseCookie(c)
-	c.SetKey(sharedSessionCookie)
-	c.SetValue("")
-	c.SetPath("/")
-	c.SetHTTPOnly(true)
-	c.SetSecure(true)
-	c.SetSameSite(fasthttp.CookieSameSiteLaxMode)
-	if s.cfg.CookieDomain != "" {
-		c.SetDomain(s.cfg.CookieDomain)
-	}
-	c.SetMaxAge(-1)
-	ctx.Response.Header.SetCookie(c)
-}
-
 // ---------- pages ----------
 
 type cardView struct {
 	Title, Cover, Href, Author string
+	Minutes                    int
 }
 
 type homeView struct {
-	Meta          Meta
-	User          *User
-	Cfg           Config
-	LoginURL      string
-	Samples       []cardView
-	MyStories     []cardView
-	PublicStories []cardView
+	Meta        Meta
+	User        *User
+	Cfg         Config
+	LoginURL    string
+	Library     []cardView
+	MyStories   []cardView
+	Bands       []bandView
+	ActiveBand  string
+	BandActive  bool
+	Orders      []orderView
+	ActiveOrder string
+	OrderActive bool
+	Reshuffle   string
+	Q           string
+	Results     []cardView
+}
+
+func (s *Server) applySearch(ctx *fasthttp.RequestCtx, v *homeView) {
+	v.Q = strings.TrimSpace(string(ctx.QueryArgs().Peek("q")))
+	if v.Q != "" {
+		v.Results = searchCards(searchDocs(s.searchIndex(), v.Q, 60))
+	}
+}
+
+// bandView is one chip in the reading-time filter.
+type bandView struct {
+	ID     string
+	Label  string
+	Count  int
+	Active bool
+	Href   string
+}
+
+// orderView is one chip in the shelf-order control.
+type orderView struct {
+	ID     string
+	Label  string
+	Active bool
+	Href   string
+}
+
+// libraryOrders are the ways a reading shelf can be ordered. "new" is the feed a
+// returning reader wants; "mix" is the one that matters at library size, because
+// four hundred stories in updated_at order is a wall of the last batch and
+// nothing else; the two reading-time orders are for a parent who already knows
+// how long tonight's read has to be.
+var libraryOrders = []struct{ ID, Label string }{
+	{"new", "Newest"},
+	{"mix", "Shuffled"},
+	{"short", "Shortest"},
+	{"long", "Longest"},
+}
+
+// orderOf reads `?o=`, falling back to def so an unknown value shows the page's
+// own default order rather than an empty parameter.
+func orderOf(ctx *fasthttp.RequestCtx, def string) string {
+	want := string(ctx.QueryArgs().Peek("o"))
+	for _, order := range libraryOrders {
+		if order.ID == want {
+			return want
+		}
+	}
+	return def
+}
+
+// shelfHref builds the link for a chip, keeping the other half of the filter.
+// The default order is left out of the query so the plain URL stays canonical.
+func shelfHref(path, band, order, def, salt string) string {
+	query := "?"
+	first := true
+	add := func(key, value string) {
+		if value == "" || (key == "o" && value == def) {
+			return
+		}
+		if !first {
+			query += "&"
+		}
+		query += key + "=" + qesc(value)
+		first = false
+	}
+	add("t", band)
+	add("o", order)
+	add("s", salt)
+	if first {
+		return path
+	}
+	return path + query
+}
+
+// orderCards sorts a shelf in place. The mix is seeded by the day and the `?s=`
+// salt, so the order holds still while a reader browses and turns over overnight;
+// the reshuffle control only bumps the salt.
+func orderCards(cards []cardView, order, salt string) {
+	switch order {
+	case "short":
+		sort.SliceStable(cards, func(i, j int) bool { return cards[i].Minutes < cards[j].Minutes })
+	case "long":
+		sort.SliceStable(cards, func(i, j int) bool { return cards[i].Minutes > cards[j].Minutes })
+	case "mix":
+		day := uint64(time.Now().UTC().Unix() / 86400)
+		rng := rand.New(rand.NewPCG(day, uint64(len(salt)+7)*0x9e3779b97f4a7c15+hashString(salt)))
+		for i := len(cards) - 1; i > 0; i-- {
+			j := rng.IntN(i + 1)
+			cards[i], cards[j] = cards[j], cards[i]
+		}
+	}
+}
+
+// hashString is FNV-1a, so any salt the reshuffle control invents lands in a
+// different permutation without having to be numeric.
+func hashString(s string) uint64 {
+	const prime = 0x100000001b3
+	hash := uint64(0xcbf29ce484222325)
+	for i := 0; i < len(s); i++ {
+		hash = (hash ^ uint64(s[i])) * prime
+	}
+	return hash
+}
+
+// orderBars is the order chip row for a shelf, each chip carrying the reading-time
+// band the reader already chose.
+func orderBars(path, band, order, def, salt string) []orderView {
+	bars := make([]orderView, 0, len(libraryOrders))
+	for _, o := range libraryOrders {
+		bars = append(bars, orderView{
+			ID: o.ID, Label: o.Label, Active: o.ID == order,
+			Href: shelfHref(path, band, o.ID, def, salt),
+		})
+	}
+	return bars
+}
+
+// readingBands are the library's reading-time filters. The "all" chip has a
+// zero id, which is also what an absent `?t=` selects, so an unknown value
+// falls back to showing everything rather than an empty library.
+var readingBands = []struct {
+	ID, Label string
+	Min, Max  int
+}{
+	{"", "Any length", 0, 0},
+	{"1-5", "Under 5 min", 1, 5},
+	{"6-10", "5-10 min", 6, 10},
+	{"11-20", "10-20 min", 11, 20},
+	{"21-30", "20-30 min", 21, 30},
+	{"31", "30+ min", 31, 0},
+}
+
+func inBand(minutes, min, max int) bool {
+	if min <= 1 && max == 0 {
+		return true
+	}
+	if minutes < min {
+		return false
+	}
+	return max == 0 || minutes <= max
+}
+
+// applyBands annotates a card list with its band chips and returns the cards
+// inside the active band, so the chips can show what each band would yield.
+// Each chip links back with the shelf order it was clicked under.
+func applyBands(cards []cardView, active, path, order, def, salt string) ([]cardView, []bandView) {
+	bands := make([]bandView, 0, len(readingBands))
+	kept := make([]cardView, 0, len(cards))
+	for _, band := range readingBands {
+		count := 0
+		for _, card := range cards {
+			if !inBand(card.Minutes, band.Min, band.Max) {
+				continue
+			}
+			count++
+			if band.ID == active {
+				kept = append(kept, card)
+			}
+		}
+		bands = append(bands, bandView{
+			ID: band.ID, Label: band.Label, Count: count, Active: band.ID == active,
+			Href: shelfHref(path, band.ID, order, def, salt),
+		})
+	}
+	return kept, bands
+}
+
+// activeBand reads `?t=`, falling back to the "any length" band.
+func activeBand(ctx *fasthttp.RequestCtx) string {
+	want := string(ctx.QueryArgs().Peek("t"))
+	for _, band := range readingBands {
+		if band.ID == want {
+			return want
+		}
+	}
+	return ""
 }
 
 const siteDesc = "Reading Time is an AI storytelling & reading app for kids. Stories light up word-by-word as they're narrated, making learning to read easier — and you can generate whole illustrated picture books with AI."
@@ -137,24 +269,48 @@ func (s *Server) meta(title, desc, path string) Meta {
 	return Meta{Title: title, Desc: desc, Canonical: s.cfg.SiteBaseURL + path}
 }
 
+// sampleCards are the books shipped in books.json, in their own order.
+func (s *Server) sampleCards() []cardView {
+	cards := make([]cardView, 0, len(s.bookOrder))
+	for _, name := range s.bookOrder {
+		b := s.books[name]
+		cards = append(cards, cardView{
+			Title:   b.Title,
+			Cover:   "/static/kids-book-covers/" + b.CoverImageURL,
+			Href:    "/book/" + name,
+			Minutes: readingMinutes(b.Pages),
+		})
+	}
+	return cards
+}
+
+// shelf is the reading-time filter and the order control for one page of the
+// library. def is the page's own default order, so the plain URL stays canonical
+// and the chips know which one is the fallback.
+func shelf(ctx *fasthttp.RequestCtx, path, def string) (band, order, salt string, bars []orderView) {
+	band = activeBand(ctx)
+	order = orderOf(ctx, def)
+	salt = string(ctx.QueryArgs().Peek("s"))
+	return band, order, salt, orderBars(path, band, order, def, salt)
+}
+
 func (s *Server) handleHome(ctx *fasthttp.RequestCtx) {
 	u := s.user(ctx)
+	band, order, salt, bars := shelf(ctx, "/", "new")
+	// The sample books and the AI stories belong in one grid, so they are one
+	// list: filtered and ordered together, not shelf by shelf.
+	library := s.sampleCards()
+	if pub, err := s.stories.listPublic(400); err == nil {
+		for _, st := range pub {
+			library = append(library, storyCard(st))
+		}
+	}
 	v := homeView{
 		Meta: s.meta("Reading Time — AI storytelling & reading app for kids", siteDesc, "/"),
 		User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"),
-	}
-	for _, name := range s.bookOrder {
-		b := s.books[name]
-		v.Samples = append(v.Samples, cardView{
-			Title: b.Title,
-			Cover: "/static/kids-book-covers/" + b.CoverImageURL,
-			Href:  "/book/" + name,
-		})
-	}
-	if pub, err := s.stories.listPublic(24); err == nil {
-		for _, st := range pub {
-			v.PublicStories = append(v.PublicStories, storyCard(st))
-		}
+		ActiveBand: band, BandActive: band != "",
+		Orders: bars, ActiveOrder: order, OrderActive: order != "new",
+		Reshuffle: shelfHref("/", band, order, "new", salt),
 	}
 	if u != nil {
 		if mine, err := s.stories.listByUser(u.ID, 48); err == nil {
@@ -163,6 +319,11 @@ func (s *Server) handleHome(ctx *fasthttp.RequestCtx) {
 			}
 		}
 	}
+	// One filter over everything a reader can open, so the counts on the chips
+	// describe the whole library rather than one shelf.
+	v.Library, v.Bands = applyBands(library, band, "/", order, "new", salt)
+	orderCards(v.Library, order, salt)
+	s.applySearch(ctx, &v)
 	s.render(ctx, "home.html", v)
 }
 
@@ -176,13 +337,16 @@ func storyCard(st *Story) cardView {
 			}
 		}
 	}
-	return cardView{Title: st.Title, Cover: cover, Href: "/story/" + st.ID, Author: st.AuthorName}
+	return cardView{
+		Title: st.Title, Cover: cover, Href: "/story/" + st.ID,
+		Author: st.AuthorName, Minutes: st.ReadingMinutes,
+	}
 }
 
 func (s *Server) handleAuthor(ctx *fasthttp.RequestCtx) {
 	u := s.user(ctx)
 	s.render(ctx, "author.html", map[string]any{
-		"Meta":     s.meta("Create a story — Reading Time", "Describe an idea and generate a complete illustrated picture book with AI, then read it together with word-by-word highlighting. Free app.nz account includes free credits.", "/author"),
+		"Meta":     s.meta("Create a story — Reading Time", "Describe an idea and generate a complete illustrated picture book with AI, then read it together with word-by-word highlighting..", "/author"),
 		"User":     u,
 		"Cfg":      s.cfg,
 		"LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/author"),
@@ -190,22 +354,31 @@ func (s *Server) handleAuthor(ctx *fasthttp.RequestCtx) {
 }
 
 func (s *Server) handleStories(ctx *fasthttp.RequestCtx) {
+	band, order, salt, bars := shelf(ctx, "/stories", "mix")
+	var stories []cardView
+	if pub, err := s.stories.listPublic(400); err == nil {
+		for _, st := range pub {
+			stories = append(stories, storyCard(st))
+		}
+	}
 	v := homeView{
 		Meta: s.meta("Story gallery — Reading Time", "Browse illustrated picture books created with AI by the Reading Time community — read any of them together with word-by-word highlighting.", "/stories"),
 		User: s.user(ctx), Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/stories"),
+		ActiveBand: band, BandActive: band != "",
+		Orders: bars, ActiveOrder: order, OrderActive: order != "mix",
+		Reshuffle: shelfHref("/stories", band, order, "mix", salt),
 	}
-	if pub, err := s.stories.listPublic(200); err == nil {
-		for _, st := range pub {
-			v.PublicStories = append(v.PublicStories, storyCard(st))
-		}
-	}
+	v.Library, v.Bands = applyBands(stories, band, "/stories", order, "mix", salt)
+	orderCards(v.Library, order, salt)
+	s.applySearch(ctx, &v)
 	s.render(ctx, "stories.html", v)
 }
 
 func (s *Server) handlePricing(ctx *fasthttp.RequestCtx) {
 	s.render(ctx, "pricing.html", map[string]any{
-		"Meta":     s.meta("Pricing & credits — Reading Time", "Reading the library is free. Generating AI stories and illustrations uses app.nz credits — sign up free and get free credits to start creating.", "/pricing"),
+		"Meta":     s.meta("Pricing — Reading Time Unlimited", "Read your first book free, then go Unlimited: every book, unlimited AI story writing and illustration. $9/month or $90/year.", "/pricing"),
 		"User":     s.user(ctx),
+		"Enabled":  s.billing.enabled(),
 		"Cfg":      s.cfg,
 		"LoginURL": s.loginURL(s.cfg.SiteBaseURL + "/author"),
 	})
@@ -248,10 +421,15 @@ func (s *Server) handleBook(ctx *fasthttp.RequestCtx, name string) {
 		s.handleNotFound(ctx)
 		return
 	}
+	if u := s.user(ctx); !s.allowRead(ctx, u, "book:"+name, "") {
+		s.renderPaywall(ctx, u, b.Title, "/")
+		return
+	}
 	view := ReaderView{
 		Meta:  s.meta(b.Title+" — Reading Time", "Read \""+b.Title+"\" together on Reading Time — each word lights up as it's read aloud, helping kids learn to read.", "/book/"+name),
 		Title: b.Title, AudioLink: b.AudioLink, SubsLink: b.SubsLink,
 		User: s.user(ctx), Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"), BackHref: "/",
+		Minutes: readingMinutes(b.Pages),
 	}
 	view.Meta.Image = s.cfg.SiteBaseURL + "/static/kids-book-covers/" + b.CoverImageURL
 	counter := 0
@@ -282,6 +460,10 @@ func (s *Server) handleStoryReader(ctx *fasthttp.RequestCtx, id string) {
 		apiError(ctx, fasthttp.StatusForbidden, "this story is private")
 		return
 	}
+	if !s.allowRead(ctx, u, "story:"+st.ID, st.UserID) {
+		s.renderPaywall(ctx, u, st.Title, "/")
+		return
+	}
 	desc := "\"" + st.Title + "\""
 	if st.AuthorName != "" {
 		desc += " by " + st.AuthorName
@@ -290,6 +472,7 @@ func (s *Server) handleStoryReader(ctx *fasthttp.RequestCtx, id string) {
 	view := ReaderView{
 		Meta:  s.meta(st.Title+" — Reading Time", desc, "/story/"+st.ID),
 		Title: st.Title, User: u, Cfg: s.cfg, LoginURL: s.loginURL(s.cfg.SiteBaseURL + "/"), BackHref: "/",
+		Minutes: st.ReadingMinutes,
 	}
 	if c := storyCard(st).Cover; strings.HasPrefix(c, "/") {
 		view.Meta.Image = s.cfg.SiteBaseURL + c
@@ -331,8 +514,8 @@ func (s *Server) handleMe(ctx *fasthttp.RequestCtx) {
 		"signedIn":   true,
 		"name":       u.DisplayName(),
 		"email":      u.Email,
-		"credits":    u.Credits(),
-		"accountUrl": s.cfg.AccountURL,
+		"subscriber": u.Sub,
+		"accountUrl": "/account",
 	})
 }
 
@@ -368,7 +551,7 @@ type genResult struct {
 func (s *Server) handleGenerate(ctx *fasthttp.RequestCtx) {
 	u := s.user(ctx)
 	if u == nil {
-		apiError(ctx, fasthttp.StatusUnauthorized, "sign in with your app.nz account to generate stories")
+		apiError(ctx, fasthttp.StatusUnauthorized, "sign in to generate stories")
 		return
 	}
 	var req generateReq
@@ -387,8 +570,8 @@ func (s *Server) handleGenerate(ctx *fasthttp.RequestCtx) {
 	if req.Pages > 16 {
 		req.Pages = 16
 	}
-	if req.Model == "" {
-		req.Model = "auto"
+	if req.Model == "" || req.Model == "auto" {
+		req.Model = unlimitedModel
 	}
 	if req.Audience == "" {
 		req.Audience = "ages 4-8"
@@ -403,7 +586,11 @@ func (s *Server) handleGenerate(ctx *fasthttp.RequestCtx) {
 		"Keep each page's text short (1-3 sentences). Make image_prompt for every page describe the same " +
 		"characters and a consistent, beautiful illustration style so the pictures feel like one book."
 
-	out, err := s.gw.chatComplete(sessionToken(ctx), req.Model, []chatMessage{
+	tok, ok := s.aiAuth(ctx, u, req.Model, unlimitedModel, "text", dailyTextCap)
+	if !ok {
+		return
+	}
+	out, err := s.gw.chatComplete(tok, req.Model, []chatMessage{
 		{Role: "system", Content: sys},
 		{Role: "user", Content: user},
 	}, 4000)
@@ -445,10 +632,14 @@ func (s *Server) handleIllustrate(ctx *fasthttp.RequestCtx) {
 	if req.Style != "" {
 		prompt = prompt + ", " + req.Style
 	}
-	if req.Model == "" {
-		req.Model = "openpaths/auto-image"
+	if req.Model == "" || req.Model == "openpaths/auto-image" {
+		req.Model = "ra2"
 	}
-	imgURL, b64, err := s.gw.generateImage(sessionToken(ctx), req.Model, prompt, req.Size)
+	tok, ok := s.aiAuth(ctx, u, req.Model, "ra2", "img", dailyImageCap)
+	if !ok {
+		return
+	}
+	imgURL, b64, err := s.gw.generateImage(tok, req.Model, prompt, req.Size)
 	if err != nil {
 		s.aiError(ctx, err)
 		return
@@ -464,8 +655,9 @@ func (s *Server) handleIllustrate(ctx *fasthttp.RequestCtx) {
 }
 
 type savePageReq struct {
-	Text     string `json:"text"`
-	ImageURL string `json:"image_url"`
+	Text        string `json:"text"`
+	ImageURL    string `json:"image_url"`
+	ImagePrompt string `json:"image_prompt"`
 }
 
 type saveStoryReq struct {
@@ -513,9 +705,10 @@ func (s *Server) handleSaveStory(ctx *fasthttp.RequestCtx) {
 	for _, p := range req.Pages {
 		text := strings.TrimSpace(p.Text)
 		st.Pages = append(st.Pages, Page{
-			Text:     text,
-			Words:    splitWordsKeepSep(text),
-			ImageURL: p.ImageURL,
+			Text:        text,
+			Words:       splitWordsKeepSep(text),
+			ImageURL:    p.ImageURL,
+			ImagePrompt: p.ImagePrompt,
 		})
 		if st.CoverURL == "" && p.ImageURL != "" {
 			st.CoverURL = p.ImageURL
@@ -570,9 +763,9 @@ func (s *Server) handleDeleteStory(ctx *fasthttp.RequestCtx) {
 func (s *Server) aiError(ctx *fasthttp.RequestCtx, err error) {
 	switch err {
 	case errNotSignedIn:
-		apiError(ctx, fasthttp.StatusUnauthorized, "your app.nz session expired — please sign in again")
+		apiError(ctx, fasthttp.StatusUnauthorized, "please sign in again")
 	case errInsufficientCredits:
-		apiError(ctx, fasthttp.StatusPaymentRequired, "you're out of app.nz credits — top up to keep creating")
+		apiError(ctx, fasthttp.StatusPaymentRequired, "out of credits")
 	default:
 		apiError(ctx, fasthttp.StatusBadGateway, "generation failed: "+err.Error())
 	}

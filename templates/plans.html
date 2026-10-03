@@ -1,0 +1,21 @@
+{{define "plans"}}
+<div class="plans">
+  <div class="plan">
+    <h3>Monthly</h3>
+    <div class="price">$9<small>/month</small></div>
+    <ul><li>Every book, unlimited reading</li><li>Unlimited AI story writing</li><li>AI illustrations with RA2</li><li>Cancel anytime</li></ul>
+    {{if .User}}{{if .User.Sub}}<button class="btn btn-ghost btn-lg" onclick="manageBilling(this)">Manage plan</button>
+    {{else}}<button class="btn btn-primary btn-lg" onclick="subscribe('month',this)">Go Unlimited</button>{{end}}
+    {{else}}<a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in to subscribe</a>{{end}}
+  </div>
+  <div class="plan plan-best">
+    <span class="ribbon">Save $18</span>
+    <h3>Yearly</h3>
+    <div class="price">$90<small>/year</small></div>
+    <ul><li>Everything in Monthly</li><li>Two months free ($7.50/mo)</li><li>Best for families &amp; classrooms</li><li>Cancel anytime</li></ul>
+    {{if .User}}{{if .User.Sub}}<button class="btn btn-ghost btn-lg" onclick="manageBilling(this)">Manage plan</button>
+    {{else}}<button class="btn btn-primary btn-lg" onclick="subscribe('year',this)">Go Unlimited — yearly</button>{{end}}
+    {{else}}<a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in to subscribe</a>{{end}}
+  </div>
+</div>
+{{end}}

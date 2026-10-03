@@ -164,23 +164,41 @@ def selected(item: dict[str, object], selectors: list[str]) -> bool:
     return any(selector.casefold() in source for selector in selectors)
 
 
-def art_direction(item: dict[str, object]) -> str:
+# One entry per medium, keyed by level. `painterly` is the house default and the
+# one every existing manifest was generated with; `anime` and `comic` are second
+# registers for batches whose art direction asks for them, selected with
+# `--style`.
+MEDIUM_BY_STYLE = {
+    "painterly": {
+        "accessible": "warm painterly children's book illustration, luminous color, gentle wonder, photographic lighting, painterly and not flat cartoon",
+        "intermediate": "painterly fantasy adventure illustration, expressive textures, clear silhouettes, rich environmental detail",
+        "advanced": "sophisticated painterly fantasy illustration, cinematic composition, tactile detail, restrained dramatic light",
+    },
+    "anime": {
+        "accessible": "modern Japanese anime key visual for a children's book, clean confident linework, flat cel shading, soft hand-painted background, expressive round face, luminous color",
+        "intermediate": "cinematic anime film key visual, precise linework, even cel shading, hand-painted background art, expressive close-up, rich environmental detail",
+        "advanced": "moody anime film still, fine confident linework, cinematic cel shading, hand-painted dusk and night backgrounds, restrained dramatic light",
+    },
+    "comic": {
+        "accessible": "bold inked illustration, thick black outlines, flat blocks of saturated colour, halftone dot shading in the shadows, bright poster palette, expressive cartoon face with real hands",
+        "intermediate": "bold inked illustration, thick black outlines, flat blocks of colour, hard shadow shapes, halftone dot shading, dramatic foreshortening, rich environmental detail",
+        "advanced": "adult inked illustration, heavy black outlines, moody blocks of flat colour, screentone shading, noir lighting, cinematic composition, restrained and grounded",
+    },
+}
+
+
+def art_direction(item: dict[str, object], style_preset: str = "painterly") -> str:
     level = str(item["level"])
     audience = str(item["audience"])
     normalized = audience.casefold().replace("ages", "").replace("age", "").strip()
-    if level == "accessible":
-        style = "warm children's storybook illustration, rounded readable forms, luminous color, gentle wonder"
-    elif level == "intermediate":
-        style = "painterly fantasy adventure illustration, expressive textures, clear silhouettes, rich environmental detail"
-    else:
-        style = "sophisticated painterly fantasy illustration, cinematic composition, tactile detail, restrained dramatic light"
+    style = MEDIUM_BY_STYLE[style_preset][level]
     if normalized.startswith(("5–", "5-", "6–", "6-", "7–", "7-", "8–", "8-")):
         framing = "character-forward, safe and inviting, with no horror"
     elif normalized.startswith(("9–", "9-", "10–", "10-", "11–", "11-", "12–", "12-", "13–", "13-", "14–", "14-")):
         framing = "youthful protagonists and an emotionally clear heroic moment"
     else:
         framing = "adult protagonists, nuanced body language, grounded and non-glorifying"
-    return f"{style}; {framing}; vertical book-cover composition; no written words, letters, logos, captions, borders, or watermark"
+    return f"{style}; {framing}; vertical full-bleed cover composition with no frame or margin; absolutely no text, no letters, no characters, no writing, no numbers, no glyphs, no signage, no watermark, no captions, no title, no border; every surface is plain and blank"
 
 
 def main() -> int:
@@ -194,7 +212,11 @@ def main() -> int:
     parser.add_argument("--only", action="append", default=[])
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--size", type=parse_size, default=DEFAULT_SIZE)
+    parser.add_argument("--style", choices=sorted(MEDIUM_BY_STYLE), default="painterly",
+                        help="medium register appended to each cover prompt")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--seed-salt", type=int, default=0,
+                        help="re-roll the deterministic seed; use to replace a cover that came back broken")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -217,12 +239,16 @@ def main() -> int:
             if ensure_cover_link(source, target, str(item["title"])):
                 linked += 1
             print(f"skip {source.relative_to(ROOT)}")
-            continue
-        prompt = f"{item['prompt']}. {art_direction(item)}"
+        prompt = f"{item['prompt']}. {art_direction(item, args.style)}"
         if args.dry_run:
             print(f"plan {source.relative_to(ROOT)} -> {target.relative_to(ROOT)} {args.size[0]}x{args.size[1]}")
             continue
-        seed = int.from_bytes(hashlib.sha256(str(item["path"]).encode()).digest()[:8], "big") % (2**63 - 1)
+        # A handful of seeds degenerate into a landscape with no subject on this
+        # model whatever the prompt says, so a broken cover cannot be re-rolled by
+        # rewriting its prompt alone; --seed-salt is how it is re-rolled. Mirrors
+        # generate_manuscript_page_art.py's flag of the same name.
+        material = str(item["path"]) if not args.seed_salt else f"{item['path']}#{args.seed_salt}"
+        seed = int.from_bytes(hashlib.sha256(material.encode()).digest()[:8], "big") % (2**63 - 1)
         try:
             model = model or discover_model(args.base)
             t0 = time.time()

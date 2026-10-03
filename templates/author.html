@@ -4,21 +4,26 @@
 
 <main class="author">
   <div class="author-head">
-    <h1>✨ AI Story Studio</h1>
-    <p>Describe an idea and generate a complete illustrated picture book. Pick your
-       favourite text &amp; image models — every generation uses your
-       <a href="{{.Cfg.AccountURL}}">app.nz credits</a>
-       (<a href="/pricing">how pricing works</a>).</p>
+    <h1>AI Story Studio</h1>
+    <p>Describe an idea and get a complete illustrated picture book — written by DeepSeek V4 Flash, painted by RA2.
+       Then polish every page with the AI editor and publish it.</p>
   </div>
 
   {{if not .User}}
   <div class="signin-callout">
-    <p>Fill in your story idea below — when you hit Generate you'll be asked to
-       sign in with a free <strong>app.nz</strong> account, which includes free
-       credits to get started.</p>
-    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in — it's free</a>
+    <p>Sign in to write and illustrate stories. Your first book to read is free; Unlimited is $9/month or $90/year.</p>
+    <a class="btn btn-primary btn-lg" href="{{.LoginURL}}">Sign in</a>
   </div>
+  {{else if not .User.Sub}}
+  <div class="upsell">
+    <span><strong>Go Unlimited</strong> — unlimited writing and illustration, every book to read. $9/mo or $90/yr.</span>
+    <a class="btn btn-primary" href="/pricing">See plans</a>
+  </div>
+  {{else}}
+  <div id="subbed" hidden></div>
   {{end}}
+
+  <div id="mystories" class="mystories"></div>
 
   <form id="ideaForm" class="idea-card">
     <label class="field full">
@@ -26,22 +31,10 @@
       <textarea id="prompt" rows="3" placeholder="A shy little dragon who learns to make friends at school"></textarea>
     </label>
     <div class="field-row">
-      <label class="field">
-        <span>Audience</span>
-        <input id="audience" value="ages 4-8">
-      </label>
-      <label class="field">
-        <span>Pages</span>
-        <input id="pages" type="number" min="3" max="16" value="8">
-      </label>
-      <label class="field">
-        <span>Story model</span>
-        <select id="textModel"></select>
-      </label>
-      <label class="field">
-        <span>Image model</span>
-        <select id="imageModel"></select>
-      </label>
+      <label class="field"><span>Audience</span><input id="audience" value="ages 4-8"></label>
+      <label class="field"><span>Pages</span><input id="pages" type="number" min="3" max="16" value="8"></label>
+      <label class="field"><span>Story model</span><select id="textModel"></select></label>
+      <label class="field"><span>Image model</span><select id="imageModel"></select></label>
     </div>
     <label class="field full">
       <span>Art style (optional)</span>
@@ -49,17 +42,20 @@
     </label>
     <div class="idea-actions">
       <button type="submit" id="genBtn" class="btn btn-primary btn-lg">Generate story</button>
+      <button type="button" id="blankBtn" class="btn btn-ghost btn-lg">Start blank</button>
       <span id="genStatus" class="status"></span>
     </div>
   </form>
 
   <section id="workspace" class="workspace" hidden>
-    <div class="workspace-bar">
+    <div class="workspace-bar sticky">
       <input id="title" class="title-input" placeholder="Story title">
+      <span id="stat" class="stat"></span>
       <div class="workspace-actions">
-        <button id="illustrateAll" class="btn btn-ghost">🎨 Illustrate all</button>
-        <label class="toggle"><input type="checkbox" id="public"> Share publicly</label>
-        <button id="saveBtn" class="btn btn-primary">Save book</button>
+        <button id="illustrateAll" class="btn btn-ghost">Illustrate all</button>
+        <button id="addPage" class="btn btn-ghost">+ Page</button>
+        <label class="toggle"><input type="checkbox" id="public"> Publish to gallery</label>
+        <button id="saveBtn" class="btn btn-primary">Save</button>
       </div>
     </div>
     <div id="pages" class="pages"></div>
@@ -72,41 +68,86 @@
 <script>
 const signedIn = {{if .User}}true{{else}}false{{end}};
 const loginUrl = {{.LoginURL}};
-let story = { title: "", pages: [] };
+const WPM = 140;
+let story = { id:'', title:'', pages:[] };
+let dirty = false, draftKey = 'rt_draft', saving = false;
 
+const $ = id => document.getElementById(id);
 function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
-function status(msg, kind){ const s=document.getElementById('genStatus'); s.textContent=msg||''; s.className='status'+(kind?' '+kind:''); }
-
+function status(msg, kind){ const s=$('genStatus'); s.textContent=msg||''; s.className='status'+(kind?' '+kind:''); }
+function words(t){ return (t.match(/[\w’'-]+/g)||[]).length; }
+function touch(){ dirty=true; updateStat(); try{ localStorage.setItem(draftKey, JSON.stringify({story, prompt:$('prompt').value})); }catch(e){} }
+function updateStat(){
+  const w=story.pages.reduce((n,p)=>n+words(p.text||''),0);
+  $('stat').textContent = story.pages.length+' pages · '+w+' words · '+Math.max(w?1:0,Math.ceil(w/WPM))+' min read';
+}
+async function api(path, body){
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===402 || (d.error && /credits/.test(d.error))){ if(confirm((d.error||'Out of credits')+'\n\nGo Unlimited?')) location.href='/pricing'; throw new Error(d.error||'payment required'); }
+  if(!r.ok) throw new Error(d.error||'failed');
+  return d;
+}
 async function loadModels(){
-  try{
-    const r = await fetch('/api/models'); const d = await r.json();
-    fill('textModel', d.text||[]); fill('imageModel', d.image||[]);
-  }catch(e){ /* keep empty */ }
+  try{ const d=await (await fetch('/api/models')).json(); fill('textModel', d.text||[], 'deepseek-v4-flash'); fill('imageModel', d.image||[], 'ra2'); }
+  catch(e){ fill('textModel',[], 'deepseek-v4-flash'); fill('imageModel',[], 'ra2'); }
 }
-function fill(id, list){
-  const sel=document.getElementById(id); sel.innerHTML='';
-  if(!list.length){ sel.appendChild(new Option('auto','auto')); return; }
-  list.forEach(m=> sel.appendChild(new Option(m, m)));
+function fill(id, list, pref){
+  const sel=$(id); sel.innerHTML='';
+  if(!list.includes(pref)) list=[pref].concat(list);
+  list.forEach(m=> sel.appendChild(new Option(m===pref?(m==='ra2'?'ra2 (included)':'deepseek-v4-flash (included)'):m, m)));
 }
+
+function setPreview(preview, url){ preview.innerHTML=''; if(url){ const im=el('img'); im.src=url; preview.appendChild(im); } else preview.appendChild(el('div','page-preview-blank','🖼️')); }
+
+function assistBtn(label, action, p, ta, i){
+  const b=el('button','btn btn-ghost btn-sm',label); b.type='button';
+  b.onclick=async()=>{
+    if(!signedIn) return location.href=loginUrl;
+    let instruction='';
+    if(action==='custom'){ instruction=prompt('How should this page change?'); if(!instruction) return; }
+    const o=b.textContent; b.disabled=true; b.textContent='…';
+    try{
+      const d=await api('/api/story/assist',{action:action==='custom'?'':action, instruction, text:p.text, title:$('title').value,
+        audience:$('audience').value, model:$('textModel').value, context:story.pages.slice(0,i).map(x=>x.text)});
+      p.text=d.text; ta.value=d.text; touch();
+    }catch(e){ alert(e.message); }
+    finally{ b.disabled=false; b.textContent=o; }
+  };
+  return b;
+}
+
+function move(i,d){ const j=i+d; if(j<0||j>=story.pages.length) return; [story.pages[i],story.pages[j]]=[story.pages[j],story.pages[i]]; renderPages(); touch(); }
 
 function renderPages(){
-  const wrap=document.getElementById('pages'); wrap.innerHTML='';
+  const wrap=$('pages'); wrap.innerHTML='';
   story.pages.forEach((p, i)=>{
     const card=el('div','page-card');
-    const num=el('div','page-num', 'Page '+(i+1));
-    const ta=el('textarea','page-text'); ta.value=p.text||''; ta.rows=3;
-    ta.oninput=()=>{ p.text=ta.value; };
+    const head=el('div','page-head'); head.appendChild(el('div','page-num','Page '+(i+1)));
+    const ops=el('div','page-ops');
+    [['↑',()=>move(i,-1)],['↓',()=>move(i,1)],['⧉',()=>{story.pages.splice(i+1,0,{...p});renderPages();touch();}],
+     ['✕',()=>{ if(story.pages.length>1 && confirm('Delete page '+(i+1)+'?')){ story.pages.splice(i,1); renderPages(); touch(); } }]
+    ].forEach(([t,f])=>{ const b=el('button','btn btn-ghost btn-sm',t); b.type='button'; b.onclick=f; ops.appendChild(b); });
+    head.appendChild(ops);
+    const ta=el('textarea','page-text'); ta.value=p.text||''; ta.rows=4;
+    ta.oninput=()=>{ p.text=ta.value; touch(); };
+    const tools=el('div','page-tools');
+    [['Rewrite','rewrite'],['Simplify','simplify'],['Expand','expand'],['Shorten','shorten'],['Rhyme','rhyme'],['Custom…','custom']]
+      .forEach(([l,a])=>tools.appendChild(assistBtn(l,a,p,ta,i)));
     const ip=el('input','page-imgprompt'); ip.value=p.image_prompt||''; ip.placeholder='illustration prompt';
-    ip.oninput=()=>{ p.image_prompt=ip.value; };
-    const preview=el('div','page-preview');
-    if(p.image_url){ const im=el('img'); im.src=p.image_url; preview.appendChild(im); }
-    else { preview.appendChild(el('div','page-preview-blank','🖼️')); }
-    const ill=el('button','btn btn-ghost btn-sm', p.image_url?'Re-illustrate':'🎨 Illustrate');
-    ill.onclick=(e)=>{ e.preventDefault(); illustrate(i, ill, preview); };
-    const right=el('div','page-right'); right.append(ip, ill, preview);
-    const left=el('div','page-left'); left.append(num, ta);
+    ip.oninput=()=>{ p.image_prompt=ip.value; touch(); };
+    const preview=el('div','page-preview'); setPreview(preview,p.image_url);
+    const ill=el('button','btn btn-ghost btn-sm', p.image_url?'Re-illustrate':'Illustrate'); ill.type='button';
+    ill.onclick=()=>illustrate(i, ill, preview);
+    const sug=el('button','btn btn-ghost btn-sm','Suggest prompt'); sug.type='button';
+    sug.onclick=async()=>{ if(!signedIn) return location.href=loginUrl; sug.disabled=true;
+      try{ const d=await api('/api/story/assist',{action:'prompt',text:p.text,title:$('title').value,model:$('textModel').value,context:story.pages.slice(0,i).map(x=>x.text)});
+        p.image_prompt=d.text; ip.value=d.text; touch(); }catch(e){ alert(e.message); } finally{ sug.disabled=false; } };
+    const right=el('div','page-right'); right.append(ip, sug, ill, preview);
+    const left=el('div','page-left'); left.append(head, ta, tools);
     card.append(left, right); wrap.appendChild(card);
   });
+  updateStat();
 }
 
 async function illustrate(i, btn, preview){
@@ -115,67 +156,95 @@ async function illustrate(i, btn, preview){
   if(!(p.image_prompt||'').trim()){ alert('Add an illustration prompt first.'); return; }
   const orig=btn.textContent; btn.disabled=true; btn.textContent='Painting…';
   try{
-    const r=await fetch('/api/story/illustrate',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt:p.image_prompt, model:document.getElementById('imageModel').value, style:document.getElementById('style').value})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'failed');
-    p.image_url=d.url;
-    preview.innerHTML=''; const im=el('img'); im.src=d.url; preview.appendChild(im);
-    btn.textContent='Re-illustrate';
+    const d=await api('/api/story/illustrate',{prompt:p.image_prompt, model:$('imageModel').value, style:$('style').value});
+    p.image_url=d.url; setPreview(preview,d.url); btn.textContent='Re-illustrate'; touch();
   }catch(e){ alert('Illustration failed: '+e.message); btn.textContent=orig; }
   finally{ btn.disabled=false; }
 }
 
-document.getElementById('illustrateAll').onclick=async(e)=>{
+$('illustrateAll').onclick=async(e)=>{
   e.preventDefault();
   const cards=[...document.querySelectorAll('.page-card')];
   for(let i=0;i<story.pages.length;i++){
-    const btn=cards[i].querySelector('.page-right button');
-    const preview=cards[i].querySelector('.page-preview');
-    await illustrate(i, btn, preview);
+    if(story.pages[i].image_url) continue;
+    const btn=cards[i].querySelector('.page-right button:last-of-type');
+    await illustrate(i, btn, cards[i].querySelector('.page-preview'));
   }
 };
+$('addPage').onclick=(e)=>{ e.preventDefault(); story.pages.push({text:'',image_prompt:'',image_url:''}); renderPages(); touch(); };
 
-document.getElementById('ideaForm').onsubmit=async(e)=>{
+function openWorkspace(){ $('workspace').hidden=false; $('title').value=story.title||''; renderPages(); }
+$('title').oninput=()=>{ story.title=$('title').value; touch(); };
+$('blankBtn').onclick=()=>{ if(!signedIn) return location.href=loginUrl;
+  if(dirty && !confirm('Discard your unsaved draft?')) return;
+  story={id:'',title:'',pages:[{text:'',image_prompt:'',image_url:''}]}; openWorkspace(); $('workspace').scrollIntoView({behavior:'smooth'}); };
+
+$('ideaForm').onsubmit=async(e)=>{
   e.preventDefault();
   if(!signedIn) return location.href=loginUrl;
-  const prompt=document.getElementById('prompt').value.trim();
+  const prompt=$('prompt').value.trim();
   if(!prompt){ status('Describe your story idea first.','err'); return; }
-  const btn=document.getElementById('genBtn'); btn.disabled=true;
-  status('Writing your story…','busy');
+  const btn=$('genBtn'); btn.disabled=true; status('Writing your story…','busy');
   try{
-    const r=await fetch('/api/story/generate',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt, audience:document.getElementById('audience').value,
-        pages:parseInt(document.getElementById('pages').value)||8, model:document.getElementById('textModel').value})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'failed');
-    story={ title:d.title||'My Story', pages:(d.pages||[]).map(p=>({text:p.text||'', image_prompt:p.image_prompt||'', image_url:''})) };
-    document.getElementById('title').value=story.title;
-    document.getElementById('workspace').hidden=false;
-    renderPages(); status('Story ready — edit, illustrate, then save!','ok');
-    document.getElementById('workspace').scrollIntoView({behavior:'smooth'});
+    const d=await api('/api/story/generate',{prompt, audience:$('audience').value, pages:parseInt($('pages').value)||8, model:$('textModel').value});
+    story={ id:'', title:d.title||'My Story', pages:(d.pages||[]).map(p=>({text:p.text||'', image_prompt:p.image_prompt||'', image_url:''})) };
+    openWorkspace(); touch(); status('Story ready — edit, illustrate, then publish.','ok');
+    $('workspace').scrollIntoView({behavior:'smooth'});
   }catch(e){ status('Generation failed: '+e.message,'err'); }
   finally{ btn.disabled=false; }
 };
 
-document.getElementById('saveBtn').onclick=async(e)=>{
-  e.preventDefault();
+async function save(){
   if(!signedIn) return location.href=loginUrl;
-  const out=document.getElementById('saveResult');
-  out.textContent='Saving…';
+  if(saving) return; saving=true;
+  const out=$('saveResult'); out.textContent='Saving…';
+  $('saveBtn').disabled=true;
   try{
-    const r=await fetch('/api/story/save',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ id:story.id||'', title:document.getElementById('title').value,
-        prompt:document.getElementById('prompt').value, text_model:document.getElementById('textModel').value,
-        image_model:document.getElementById('imageModel').value, public:document.getElementById('public').checked,
-        pages:story.pages.map(p=>({text:p.text, image_url:p.image_url})) })});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'failed');
-    story.id=d.id;
-    out.innerHTML='Saved! <a href="'+d.url+'">Open your book →</a>';
+    const d=await api('/api/story/save',{ id:story.id||'', title:$('title').value, prompt:$('prompt').value,
+      text_model:$('textModel').value, image_model:$('imageModel').value, public:$('public').checked,
+      pages:story.pages.map(p=>({text:p.text, image_url:p.image_url, image_prompt:p.image_prompt})) });
+    story.id=d.id; dirty=false; try{ localStorage.removeItem(draftKey); }catch(e){}
+    history.replaceState(null,'','/author?id='+d.id);
+    const full=location.origin+d.url;
+    out.innerHTML='';
+    const panel=el('div','share-panel');
+    const inp=el('input'); inp.readOnly=true; inp.value=full; inp.onclick=()=>inp.select();
+    const copy=el('button','btn btn-ghost','Copy link'); copy.onclick=()=>{ navigator.clipboard.writeText(full); copy.textContent='Copied'; };
+    const open=el('a','btn btn-primary','Read it'); open.href=d.url;
+    panel.append(el('strong',null, $('public').checked?'Published!':'Saved (private).'), inp, copy, open);
+    out.appendChild(panel);
   }catch(e){ out.textContent='Save failed: '+e.message; }
-};
+  finally{ saving=false; $('saveBtn').disabled=false; }
+}
+$('saveBtn').onclick=(e)=>{ e.preventDefault(); save(); };
+addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='s'&&!$('workspace').hidden){ e.preventDefault(); save(); } });
 
-loadModels();
+async function init(){
+  loadModels();
+  if(!signedIn) return;
+  try{
+    const d=await (await fetch('/api/story/list')).json();
+    const m=$('mystories');
+    (d.stories||[]).forEach(s=>{ const a=el('a'); a.textContent=(s.public?'\u{1F30D} ':'\u{1F512} ')+s.title; a.href='/author?id='+s.id; m.appendChild(a); });
+  }catch(e){}
+  const id=new URLSearchParams(location.search).get('id');
+  if(id){
+    try{
+      const d=await (await fetch('/api/story/get?id='+encodeURIComponent(id))).json();
+      if(d.error) throw new Error(d.error);
+      story={id:d.id,title:d.title,pages:d.pages}; $('prompt').value=d.prompt||''; $('public').checked=!!d.public;
+      openWorkspace(); return;
+    }catch(e){ status(e.message,'err'); }
+  }
+  try{
+    const dr=JSON.parse(localStorage.getItem(draftKey)||'null');
+    if(dr && dr.story && dr.story.pages && dr.story.pages.length && confirm('Restore your unsaved draft?')){
+      story=dr.story; $('prompt').value=dr.prompt||''; openWorkspace();
+    }
+  }catch(e){}
+}
+init();
 </script>
+<script src="/static/js/billing.js"></script>
 </body></html>

@@ -17,7 +17,8 @@ import (
 type Config struct {
 	Port int
 	// DBPath is readingtime's own SQLite DB for user-authored stories.
-	DBPath string
+	DBPath      string
+	DatabaseURL string
 	// AppNZDatabasePath is the shared app.nz SSO/billing DB. Read-only here: we
 	// look up the session cookie -> user. Same file papers.app.nz shares.
 	AppNZDatabasePath string
@@ -38,6 +39,13 @@ type Config struct {
 	CookieDomain string
 	Debug        bool
 	Dev          bool
+
+	StripeSecretKey     string
+	StripeWebhookSecret string
+	StripePriceMonthly  string
+	StripePriceYearly   string
+	ServiceGatewayKey   string
+	StaticBase          string
 }
 
 func loadConfig() Config {
@@ -57,6 +65,10 @@ func loadConfig() Config {
 		dbPath = "readingtime.db"
 	}
 
+	dburl := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+	if dburl == "" {
+		log.Fatalf("DATABASE_URL is required (postgres)")
+	}
 	appnzDB := strings.TrimSpace(os.Getenv("APPNZ_DATABASE_PATH"))
 	if appnzDB == "" {
 		appnzDB = "/nvme0n1-disk/data/appnz-sso.db"
@@ -88,6 +100,7 @@ func loadConfig() Config {
 	return Config{
 		Port:              port,
 		DBPath:            dbPath,
+		DatabaseURL:       dburl,
 		AppNZDatabasePath: appnzDB,
 		GatewayURL:        strings.TrimRight(gateway, "/"),
 		LoginURL:          login,
@@ -96,5 +109,19 @@ func loadConfig() Config {
 		CookieDomain:      cookieDomain,
 		Debug:             os.Getenv("DEBUG") == "true",
 		Dev:               os.Getenv("DEV") == "true",
+
+		StripeSecretKey:     strings.TrimSpace(os.Getenv("STRIPE_SECRET_KEY")),
+		StripeWebhookSecret: strings.TrimSpace(os.Getenv("STRIPE_WEBHOOK_SECRET")),
+		StripePriceMonthly:  envOr("STRIPE_PRICE_MONTHLY", "price_1S2ldsIUXi45bfQef43dHQa1"),
+		StripePriceYearly:   envOr("STRIPE_PRICE_YEARLY", "price_1S2leFIUXi45bfQe5GaTYMTX"),
+		ServiceGatewayKey:   strings.TrimSpace(os.Getenv("GATEWAY_SERVICE_KEY")),
+		StaticBase:          strings.TrimRight(strings.TrimSpace(os.Getenv("STATIC_BASE_URL")), "/"),
 	}
+}
+
+func envOr(k, d string) string {
+	if v := strings.TrimSpace(os.Getenv(k)); v != "" {
+		return v
+	}
+	return d
 }

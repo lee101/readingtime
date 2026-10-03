@@ -1,0 +1,148 @@
+{
+  "covers": [
+    {
+      "path": "manuscripts/accessible/42-the-compass-rose-in-the-toolbox.md",
+      "title": "The Compass Rose in the Toolbox",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's science-adventure cover: a child opens a worn travel toolbox on a hill and finds a brass compass whose needle turns, while a hand-held magnet attracts iron nails and repels another magnet. Show a simple invisible field around the magnet as delicate iron filings, and a distant landscape suggesting the child is trying to find direction. Warm morning light, clear magnet poles and compass needle, safe wonder, no written directions, letters, numbers, compass letters, or text."
+    },
+    {
+      "path": "manuscripts/accessible/43-the-bridge-that-listened.md",
+      "title": "The Bridge That Listened",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's sound-storybook scene over a deep gorge: a small metal bridge is tested by children plucking a wire, tapping different cups, and watching a thin ribbon or dust dance for low and high notes. One child learns that sound begins with vibration and that shorter strings or smaller cups can produce higher pitches, while distant animals call across the valley. Make vibration, pitch, and hearing visible through action. Clear forms, playful motion, no sound-wave text, letters, numbers, or writing."
+    },
+    {
+      "path": "manuscripts/accessible/44-the-garden-that-wore-its-morning.md",
+      "title": "The Garden That Wore Its Morning",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's plant-water storybook illustration at a desert garden: a gardener observes leaves in cool morning light, tiny stomata opening and closing like quiet doors, water traveling up from roots, and a few vapor traces leaving the leaves. By blazing midday the pores appear mostly closed and the plant looks rested; later, evening dew and shaded soil complete the cycle. Keep the plant central, scientifically suggestive, warm and magical, with no diagram labels, arrows containing text, letters, numbers, or writing."
+    },
+    {
+      "path": "manuscripts/accessible/45-the-number-tree.md",
+      "title": "The Number Tree",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's mathematics-storybook cover in a magical orchard: children discover that each new branch grows from the sum of the two branches before it, beginning with paired 1s and building larger paired numbers along the tree. Bright seed-pods form a visual pattern without written numerals, and the children use stepping stones to test the rule. Make the branching addition pattern, counting, and collaborative discovery clear without equations. Warm green and gold, no digits, letters, symbols containing text, or labels."
+    },
+    {
+      "path": "manuscripts/accessible/46-the-lamp-that-needed-a-path.md",
+      "title": "The Lamp That Needed a Path",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's electricity storybook scene in a workshop: children build a simple closed circuit with a glowing lamp, a battery, a switch, and copper wire, then test that a path of metal conducts while plastic, dry wood, and a broken gap do not. One child traces the whole path so the lamp lights, and a safe bright spark-free glow is the only light source. Emphasize closed path, conductor/insulator, and careful testing. No wiring diagrams containing text, letters, numbers, symbols, or writing."
+    },
+    {
+      "path": "manuscripts/accessible/47-the-map-of-animal-tracks.md",
+      "title": "The Map of Animal Tracks",
+      "level": "accessible",
+      "audience": "Ages 6–8",
+      "target_words": 60,
+      "prompt": "A vertical children's field-science storybook scene at dawn: young trackers compare footprints in soft mud, a broken twig, feathers, and other signs, then match a series of prints to a familiar animal without claiming every track tells a complete story. A distant line of migrating birds and a migrating deer herd connect the small signs to seasonal movement. Make careful observation, pattern comparison, and respect for living animals central. Soft woodland colors, no written labels, arrows containing words, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/28-the-glasshouse-that-measured-the-sky.md",
+      "title": "The Glasshouse That Measured the Sky",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical young-naturalist science cover inside a glasshouse observatory: students compare a barometer, rain gauge, anemometer, thermometer, and hygrometer, watching a storm glass lower as air pressure falls while wind, rain, temperature, and humidity instruments change at different rates. A garden festival depends on a forecast made from multiple measurements, not one dramatic instrument. Rich glass reflections, storm light, clear instruments without readable scales, no written numbers, letters, labels, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/29-the-island-with-two-tides.md",
+      "title": "The Island With Two Tides",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical coastal science-adventure cover: a young harbor cartographer observes two high tides around a small island, comparing the Moon's and Sun's gravitational pulls and the geometry of Earth, Moon, and Sun. Tide-gauge traces appear as glowing wave shapes without written scales, while a ferry, shellfish, and marsh plants respond to changing water levels. Make the two-pull geometry and local coastline effects understandable through observation. Dramatic but scientifically grounded, no text, numbers, letters, diagrams with words, or labels."
+    },
+    {
+      "path": "manuscripts/intermediate/30-the-pattern-that-clothed-a-city.md",
+      "title": "The Pattern That Clothed a City",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical geometry-and-culture storybook scene: young builders study colorful woven tiles, carved screens, and architectural arches, discovering rotation, reflection, repetition, and tessellation while respecting the makers' cultural context. One apprentice must repair a damaged courtyard and choose a pattern that fits the boundary rather than copying decoration blindly. Rich textile texture, mathematical precision, human hands and history, no written names, letters, numbers, equations, or labels."
+    },
+    {
+      "path": "manuscripts/intermediate/31-the-grid-that-stayed-lit.md",
+      "title": "The Grid That Stayed Lit",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical energy-engineering cover: a young grid operator sees glowing power lines, transformers, a dam, wind, solar panels, and neighborhoods connected across a mountain valley during a heat wave. Load, generation, storage, transmission loss, and conservation appear as physical light-and-flow metaphors as the team coordinates a repair instead of pretending energy is unlimited. A town clock, hospital, and homes have different needs. Sophisticated but clear, no readable meters, numbers, letters, equations, labels, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/32-the-seeds-that-remembered-their-grandparents.md",
+      "title": "The Seeds That Remembered Their Grandparents",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical garden-genetics storybook scene: young growers plant seeds from tall, short, drought-tolerant, and colorful parent plants, then compare inherited traits, variation among offspring, and environmental effects such as light, water, and soil. A rescue plot needs both inherited strengths and new diversity; no single magical parent supplies every solution. Show pollen, seeds, and family traits as visible natural patterns without genetic determinism. Warm greenhouse light, no written charts, letters, numbers, labels, or text."
+    },
+    {
+      "path": "manuscripts/intermediate/33-the-average-house-on-mill-street.md",
+      "title": "The Average House on Mill Street",
+      "level": "intermediate",
+      "audience": "Ages 9–12",
+      "target_words": 70,
+      "prompt": "A vertical neighborhood-maths cover: young planners compare house sizes on a mill street using a model block for each home, then debate a single average that one enormous gatehouse distorts. A group uses a median line, a mode of common house shapes, and outlier discussion to plan a shared water pipe fairly, without erasing the needs of the unusual homes. Clear tactile models, no readable charts, equations, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/advanced/25-the-mountain-that-moved-a-mile.md",
+      "title": "The Mountain That Moved a Mile",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical geology mystery spanning a mountain coast: young field geologists match matching rock bands and fossil forms on opposite sides of a widening inlet, discover a mid-ocean ridge and the motion of seafloor, and use paleomagnetic stripes plus careful measurements to reconstruct plate movement. A village must decide what a new fault observation means without claiming every mountain is a volcano. Layered rock, ocean depth, and scientific fieldwork, no readable maps, labels, dates, letters, numbers, or text."
+    },
+    {
+      "path": "manuscripts/advanced/26-the-second-in-a-buried-forest.md",
+      "title": "The Second in a Buried Forest",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical archaeology-and-radiocarbon scene: an excavation team dates a buried forest and hearth carefully, using a known-age sample, clean laboratory preparation, calibration curves, and contamination checks, then explains why an old wood sample can describe the tree rather than the moment it was cut. A dramatic result is tested against independent evidence before it dates a buried settlement. Show layered sediment, careful sampling, and uncertainty. No readable dates, numbers, letters, labels, equations, or text."
+    },
+    {
+      "path": "manuscripts/advanced/27-the-language-no-one-spoke.md",
+      "title": "The Language No One Spoke",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical ancient-language decipherment mystery: young philologists compare an unknown script's recurring signs, a bilingual stone, sound patterns, and grammar shared with related languages while distinguishing a writing system from the spoken language itself. Two possible readings are tested against independent inscriptions, and a confident translation is narrowed when a repeated name is copied from one earlier text. Rich archive textures and careful collaboration, no readable glyphs that form words, letters, numbers, labels, or text."
+    },
+    {
+      "path": "manuscripts/advanced/28-the-city-seen-from-orbit.md",
+      "title": "The City Seen From Orbit",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical remote-sensing investigation: a youth team studies a city from orbital imagery, comparing visible color, thermal, and other spectral bands, spatial resolution, revisit time, and ground-truth visits. A satellite image suggests a new wetland, but field data reveal a seasonal difference and a misread roof; the team distinguishes a true change from sensor, lighting, and scale limits. Sophisticated Earth observation, no readable maps, legends, letters, numbers, labels, or text."
+    },
+    {
+      "path": "manuscripts/advanced/29-the-number-that-ate-a-village.md",
+      "title": "The Number That Ate a Village",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical civic-economics story: a village approves a seemingly affordable loan for a waterworks, then discovers that compounding interest, inflation, fees, and an optimistic projection have made the real cost grow over time. Young analysts rebuild the projection with transparent assumptions, compare realistic repayment paths, and negotiate a responsible alternative without blaming borrowers for arithmetic. Show money as physical glowing tokens, ledgers, pipes, and shared resources, no readable numbers, coins, letters, labels, or text."
+    },
+    {
+      "path": "manuscripts/advanced/30-the-clinic-that-counted-the-false-alarms.md",
+      "title": "The Clinic That Counted the False Alarms",
+      "level": "advanced",
+      "audience": "Ages 13–17",
+      "target_words": 80,
+      "prompt": "A vertical medical-testing mystery: a clinic team uses a screening test, a follow-up test, and a base rate to investigate why a rare condition appears alarmingly often in one neighborhood. Sensitivity, specificity, false positives, false negatives, and Bayesian updating become visible through colored tokens, patient stories, and a transparent decision tree, while the team respects privacy and avoids diagnosing anyone from a result alone. Humane clinical realism, no readable charts, equations, letters, numbers, labels, or text."
+    }
+  ]
+}

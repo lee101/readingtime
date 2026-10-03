@@ -51,29 +51,10 @@ func (g *gatewayClient) do(method, path, cookieTok string, body []byte) (*http.R
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if cookieTok != "" {
-		// Present the user's session under both cookie names the gateway accepts.
-		req.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
-			sharedSessionCookie, cookieTok, sessionCookie, cookieTok))
+	if strings.HasPrefix(cookieTok, "key:") {
+		req.Header.Set("Authorization", "Bearer "+strings.TrimPrefix(cookieTok, "key:"))
 	}
 	return g.http.Do(req)
-}
-
-// logout forwards the user's session to the app.nz logout endpoint, which
-// deletes the server-side sso_sessions row (signing the user out everywhere on
-// the network) and expires the shared cookie. Best-effort: readingtime also
-// clears the cookie locally, so a gateway hiccup never leaves the user stuck.
-func (g *gatewayClient) logout(cookieTok string) error {
-	if cookieTok == "" {
-		return nil
-	}
-	resp, err := g.do("POST", "/api/logout", cookieTok, nil)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	io.Copy(io.Discard, resp.Body)
-	return nil
 }
 
 // listModels fetches the catalogue and splits it into curated text and image
@@ -210,7 +191,7 @@ func snippet(b []byte) string {
 
 var imageNeedles = []string{"flux", "dall-e", "dalle", "sdxl", "imagen", "seedream",
 	"qwen-image", "zimage", "z-image", "hidream", "nano-banana", "gpt-image", "glm-image",
-	"grok-imagine-image", "ideogram", "recraft", "stable-diffusion", "playground", "auto-image"}
+	"grok-imagine-image", "ideogram", "recraft", "stable-diffusion", "playground", "auto-image", "ra2"}
 
 var nonImageNeedles = []string{"video", "-3d", "to-3d", "image-to-3d", "image-to-video",
 	"edit", "outpaint", "inpaint", "extend", "upscale", "controlnet", "rerank", "embed",
@@ -227,6 +208,9 @@ func containsAny(s string, needles []string) bool {
 
 func isImageModel(id string) bool {
 	l := strings.ToLower(id)
+	if l == "ra2" {
+		return true
+	}
 	if containsAny(l, nonImageNeedles) {
 		return false
 	}
@@ -235,7 +219,7 @@ func isImageModel(id string) bool {
 
 func isTextModel(id string) bool {
 	l := strings.ToLower(id)
-	if isImageModel(id) {
+	if isImageModel(id) || l == "ra2" || l == "ra2v" {
 		return false
 	}
 	if containsAny(l, nonImageNeedles) {
@@ -248,14 +232,14 @@ func isTextModel(id string) bool {
 	return containsAny(l, textNeedles) && !strings.Contains(l, "imagine")
 }
 
-var preferredTextModels = []string{"auto", "claude-sonnet-4-6", "claude-opus-4-8",
+var preferredTextModels = []string{"deepseek-v4-flash", "auto", "claude-sonnet-4-6", "claude-opus-5",
 	"gpt-5.1", "gpt-4.1", "gemini-2.5-flash", "gemini-2.5-pro", "deepseek-chat"}
 
 // Ordered by what is actually routable on this platform today (auto-image picks
 // a configured provider; gpt-image-* are configured). Models that depend on
 // unconfigured providers still appear (after these) so they light up if keys are
 // added later.
-var preferredImageModels = []string{"openpaths/auto-image", "gpt-image-1", "gpt-image-1.5",
+var preferredImageModels = []string{"ra2", "openpaths/auto-image", "gpt-image-1", "gpt-image-1.5",
 	"gpt-image-2", "gpt-image-1-mini", "flux-schnell", "flux-dev", "flux-pro"}
 
 // withPreferred returns the available models with the preferred ones (that exist)
