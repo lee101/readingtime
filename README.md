@@ -148,6 +148,15 @@ pea is a Bureau standard and the princess an instrument), `the-hearth-ledger`
 `the-house-that-was-promised` (the three pigs are a mortgage dispute with a
 licensed wolf).
 
+The **counterweight** world (`the-counterweight`, numbered 1101-1109) is the
+newest addition: Wyver Hold, a slate harbour town whose single cable railway
+only rises because somebody is standing on a balance pan at the bottom saying
+their name once. Consent is a spoken sentence containing your own name; the
+cost is the hour, and the hour does not buy a ride. All nine stories turn on the
+difference between a measurement and a promise. It takes a hundred of its own
+numbers, so `check_grand_fantasy_batch.py` learned the 1101 batch start to hold
+it to the same levelling and word-band rules as the other twenty-four worlds.
+
 ## The folk-tales batch
 
 `folk-tales-covers.json` is a batch of twelve standalone tales, numbered 110 to

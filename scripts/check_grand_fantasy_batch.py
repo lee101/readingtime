@@ -22,9 +22,9 @@ H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 LEVELS = ("accessible", "intermediate", "advanced")
 # Each batch reserves a hundred numbers: its accessible stories start on 1 and
 # its advanced stories on 7 of that hundred, with the three levels in blocks of
-# three. The second grand-fantasy batch starts at 201, so any number of batches
-# can be checked with the same rules.
-BATCH_STARTS = (101, 201, 301, 401, 501, 601, 701, 801, 901, 1001)
+# three. The second grand-fantasy batch starts at 201 and the counterweight
+# batch at 1101, so any number of batches can be checked with the same rules.
+BATCH_STARTS = (101, 201, 301, 401, 501, 601, 701, 801, 901, 1001, 1101)
 # Indexed by level, then by band (short, medium, long).
 BAND_RANGE = (
     ((1_100, 1_500), (1_800, 2_200), (2_500, 2_900)),
