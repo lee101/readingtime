@@ -263,7 +263,7 @@ func activeBand(ctx *fasthttp.RequestCtx) string {
 	return ""
 }
 
-const siteDesc = "Reading Time is an AI storytelling & reading app for kids. Stories light up word-by-word as they're narrated, making learning to read easier — and you can generate whole illustrated picture books with AI."
+const siteDesc = "AI storytelling and reading app for kids: stories light up word-by-word as they're narrated, and you can create illustrated picture books with AI."
 
 func (s *Server) meta(title, desc, path string) Meta {
 	return Meta{Title: title, Desc: desc, Canonical: s.cfg.SiteBaseURL + path}

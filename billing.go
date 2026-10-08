@@ -259,6 +259,11 @@ func (s *Server) handleStripeWebhook(ctx *fasthttp.RequestCtx) {
 			return
 		}
 		s.billing.applySub(sub, str(obj, "client_reference_id"))
+		amount, _ := obj["amount_total"].(float64)
+		thTrack("purchase", str(obj, "client_reference_id"), str(obj, "id"), map[string]any{
+			"revenue": amount / 100, "currency": strings.ToUpper(str(obj, "currency")),
+			"subscription_id": str(sub, "id"), "transaction_id": str(obj, "id"), "surface": "stripe_checkout",
+		})
 	case "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted":
 		s.billing.applySub(obj, "")
 	}

@@ -7,6 +7,7 @@
 {{template "headmeta" .}}
 <link rel="icon" href="/static/img/favicon.ico">
 <link href="/static/css/app.css" rel="stylesheet">
+<script>window.__thConfig={siteId:'thw_ZRAi6UhS8mYOgMn9imxjdb0vFeLCARdZ'};window.th=window.th||function(){(window.th.q=window.th.q||[]).push(arguments)};</script><script async src="https://twohelixes.com/static/th.js"></script>
 </head>{{end}}
 
 {{define "headmeta"}}<meta name="description" content="{{.Desc}}">
@@ -22,6 +23,7 @@
 <meta name="twitter:description" content="{{.Desc}}">{{end}}
 
 {{define "header"}}
+{{if .User}}<script>th('identify','{{.User.ID}}')</script>{{end}}
 <header class="site-header">
   <a class="brand" href="/">
     <img src="/static/img/reading-time-icon32.png" alt="" width="28" height="28" onerror="this.style.display='none'">

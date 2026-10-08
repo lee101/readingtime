@@ -30,11 +30,15 @@
   document.querySelectorAll('.auth-tab').forEach(function(t){t.addEventListener('click',function(e){e.preventDefault();mode=t.dataset.mode;msg.textContent='';apply()})});
   f.addEventListener('submit',async function(e){
     e.preventDefault(); btn.disabled=true; msg.className='status busy'; msg.textContent='Working...';
+    var su=mode==='signup';
+    th('track',su?'sign_up_started':'sign_in_started',{method:'password',surface:'login_page'});
     try{
       var r=await fetch('/api/auth/'+(mode==='signup'?'signup':'login'),{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({email:f.email.value,password:f.password.value,handle:f.handle.value,next:next})});
       var j=await r.json();
       if(!r.ok){msg.className='status err';msg.textContent=j.error||'Failed';btn.disabled=false;return}
+      th('track',su?'sign_up_completed':'sign_in_completed',{method:'password',surface:'login_page'});
+      th('flush');
       location.href=j.next||'/';
     }catch(x){msg.className='status err';msg.textContent='Network error';btn.disabled=false}
   });
